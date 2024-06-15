@@ -5,6 +5,7 @@ devel/
 src/CMakeLists.txt
 
 .idea/
+.pc
 
 logs/
 bin/
