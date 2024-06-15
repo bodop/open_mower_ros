@@ -1,0 +1,51 @@
+--- a/src/mower_logic/src/mower_logic/mower_logic.cpp
++++ b/src/mower_logic/src/mower_logic/mower_logic.cpp
+@@ -371,6 +371,7 @@ bool isGpsGood() {
+ /// @brief Called every 0.5s, used to control BLADE motor via mower_enabled variable and stop any movement in case of /odom and /mower/status outages
+ /// @param timer_event
+ void checkSafety(const ros::TimerEvent &timer_event) {
++  static int gpsWasGood=1,gpsHadTimeout=0;
+     const auto last_status = getStatus();
+     const auto last_config = getConfig();
+     const auto last_pose = getPose();
+@@ -434,7 +435,13 @@ void checkSafety(const ros::TimerEvent &
+     if (gpsGoodNow || last_config.ignore_gps_errors) {
+         setLastGoodGPS(ros::Time::now());
+         high_level_status.gps_quality_percent = 1.0 - fmin(1.0, last_pose.position_accuracy / last_config.max_position_accuracy);
+-        ROS_INFO_STREAM_THROTTLE(10, "GPS quality: " << high_level_status.gps_quality_percent);
++        if (gpsWasGood) {
++          ROS_INFO_STREAM_THROTTLE(10, "GPS quality: " << high_level_status.gps_quality_percent);
++        } else {
++          gpsWasGood=1;
++          // Show Low quality GPS has ended with the same log level.
++          ROS_WARN_STREAM("GPS quality: " << high_level_status.gps_quality_percent);
++        }
+     } else {
+         // GPS = bad, set quality to 0
+         high_level_status.gps_quality_percent = 0;
+@@ -442,7 +449,10 @@ void checkSafety(const ros::TimerEvent &
+             // set this if we don't even have an orientation
+             high_level_status.gps_quality_percent = -1;
+         }
+-        ROS_WARN_STREAM_THROTTLE(1,"Low quality GPS");
++        if (gpsWasGood) {
++          ROS_WARN_STREAM("Low quality GPS");
++          gpsWasGood=0;
++        }
+     }
+ 
+     bool gpsTimeout = ros::Time::now() - last_good_gps > ros::Duration(last_config.gps_timeout);
+@@ -450,7 +460,12 @@ void checkSafety(const ros::TimerEvent &
+     if(gpsTimeout) {
+         // GPS = bad, set quality to 0
+         high_level_status.gps_quality_percent = 0;
+-        ROS_WARN_STREAM_THROTTLE(1,"GPS timeout");
++        if (!gpsHadTimeout) {
++          gpsHadTimeout=1;
++          ROS_WARN_STREAM("GPS timeout");
++        }
++    } else {
++      gpsHadTimeout=0;
+     }
+ 
+     if (currentBehavior != nullptr && currentBehavior->needs_gps()) {

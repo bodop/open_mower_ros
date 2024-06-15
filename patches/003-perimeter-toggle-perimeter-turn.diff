@@ -1,0 +1,34 @@
+--- a/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
++++ b/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
+@@ -263,15 +263,7 @@ Behavior* PerimeterFollowBehavior::execu
+       continue;
+     }
+     /* Turn into direction of perimeter */
+-    if (innerSignal()<0) {
+-      /* Inner coil is outside */
+-      vel.linear.x=0;
+-      vel.angular.z=ANGULAR_SPEED*direction;
+-      if (state!=FOLLOW_STATE_TURN_IN) {
+-        tries=240;
+-        state=FOLLOW_STATE_TURN_IN;
+-      }
+-    } else if (outerSignal()>0) {
++    if (outerSignal()>0) {
+       /* Outer coil is inside */
+       vel.linear.x=0;
+       vel.angular.z=-ANGULAR_SPEED*direction;
+@@ -279,6 +271,14 @@ Behavior* PerimeterFollowBehavior::execu
+         tries=240;
+         state=FOLLOW_STATE_TURN_OUT;
+       }
++    } else if (innerSignal()<0) {
++      /* Inner coil is outside */
++      vel.linear.x=0;
++      vel.angular.z=ANGULAR_SPEED*direction;
++      if (state!=FOLLOW_STATE_TURN_IN) {
++        tries=240;
++        state=FOLLOW_STATE_TURN_IN;
++      }
+     } else {
+       vel.linear.x=SEARCH_SPEED;
+       if (fabs(lastPerimeter.center)>maxCenter) {

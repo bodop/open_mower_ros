@@ -1,0 +1,14 @@
+--- a/src/lib/xbot_positioning/src/xbot_positioning.cpp
++++ b/src/lib/xbot_positioning/src/xbot_positioning.cpp
+@@ -196,6 +196,11 @@ void onWheelTicks(const xbot_msgs::Wheel
+     double d_ticks = (d_wheel_l + d_wheel_r) / 2.0;
+     vx = d_ticks / dt;
+ 
++    if (abs(vx)>1.0) {
++      ROS_WARN_STREAM("got vx=" << vx << "> 1.0 - dropping measurement");
++        vx = 0.0;
++    }
++    
+     last_ticks = *msg;
+ }
+ 
