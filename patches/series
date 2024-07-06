@@ -4,3 +4,4 @@
 004-mowgli-parameters.yaml
 005-launch-files.diff
 006-reduce-log-output.diff
+007-slicer-serial-make.patch

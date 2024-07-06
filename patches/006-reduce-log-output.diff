@@ -50,3 +50,31 @@
      }
  
      if (currentBehavior != nullptr && currentBehavior->needs_gps()) {
+--- a/src/lib/xbot_monitoring/src/heatmap_generator.cpp
++++ b/src/lib/xbot_monitoring/src/heatmap_generator.cpp
+@@ -35,16 +35,24 @@ void onMap(const xbot_msgs::Map &mapInfo
+ }
+ 
+ void onSensorData(const std::string sensor_id, const xbot_msgs::SensorDataDouble::ConstPtr &msg) {
++  static int hadError=0;
+     auto & [map, publisher] = pubsub_map[sensor_id];
+     try {
+         map.atPosition("intensity",
+                        grid_map::Position(last_pose.pose.pose.position.x, last_pose.pose.pose.position.y)) = msg->data;
+         map.atPosition("elevation",
+                        grid_map::Position(last_pose.pose.pose.position.x, last_pose.pose.pose.position.y)) = 0;
++        if (hadError) {
++          hadError=0;
++          ROS_WARN_STREAM("Point added to heatmap.");
++        }
+     } catch (std::exception &e) {
+         // error inserting into map, skip it
++      if (!hadError) {
++        hadError=1;
+         ROS_WARN_STREAM("Could not add point to heatmap: " << e.what());
+-        return;
++      }
++      return;
+     }
+ 
+     sensor_msgs::PointCloud2 mapmsg;
