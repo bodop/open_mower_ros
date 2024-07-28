@@ -73,17 +73,6 @@
      <remap from="cmd_vel" to="/nav_vel"/>
      <rosparam file="$(find open_mower)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />
      <rosparam file="$(find open_mower)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
---- a/src/open_mower/launch/include/_ntrip_client.launch
-+++ b/src/open_mower/launch/include/_ntrip_client.launch
-@@ -23,7 +23,7 @@
-   <!-- ****************************************************************** -->
-   <!-- NTRIP Client Node -->
-   <!-- ****************************************************************** -->
--  <node name="ntrip_client_node" pkg="ntrip_client" type="ntrip_ros.py" output="screen" ns="ntrip_client" respawn="true" respawn_delay="1">
-+  <node name="ntrip_client_node" pkg="ntrip_client" type="ntrip_ros.py" ns="ntrip_client" respawn="true" respawn_delay="1">
- 
-     <!-- Required parameters used to connect to the NTRIP server -->
-     <param name="host"       value="$(arg host)" />
 --- a/src/open_mower/launch/move_around.launch
 +++ b/src/open_mower/launch/move_around.launch
 @@ -10,9 +10,9 @@
@@ -100,7 +89,7 @@
          <rosparam file="$(find open_mower)/params/twist_mux_topics.yaml"  command="load"/>
 --- a/src/open_mower/launch/open_mower.launch
 +++ b/src/open_mower/launch/open_mower.launch
-@@ -36,15 +36,15 @@
+@@ -38,15 +38,15 @@
          <param name="gps_wait_time" value="$(optenv OM_GPS_WAIT_TIME_SEC 10.0)"/>
          <param name="gps_timeout" value="$(optenv OM_GPS_TIMEOUT_SEC 10.0)"/>
      </node>
@@ -119,7 +108,7 @@
          <param name="external_mqtt_enable" value="$(optenv OM_MQTT_ENABLE False)" />
          <param name="external_mqtt_hostname" value="$(optenv OM_MQTT_HOSTNAME)" />
          <param name="external_mqtt_port" value="$(optenv OM_MQTT_PORT)" />
-@@ -55,13 +55,13 @@
+@@ -57,13 +57,13 @@
          <remap from="/xbot_monitoring/remote_cmd_vel" to="/joy_vel"/>
      </node>
  
@@ -138,7 +127,7 @@
  </launch>
 --- a/src/open_mower/launch/sim_navigation.launch
 +++ b/src/open_mower/launch/sim_navigation.launch
-@@ -9,9 +9,9 @@
+@@ -9,7 +9,7 @@
      <node name="rviz" pkg="rviz" type="rviz" args="-d $(find open_mower)/rviz/sim_navigation_test.rviz" required="true" />
      <node pkg="mower_map" type="mower_map_service" name="mower_map" required="true" />
  
@@ -147,10 +136,6 @@
          <remap from="cmd_vel_out" to="/cmd_vel"/>
  
          <rosparam file="$(find open_mower)/params/twist_mux_topics.yaml"  command="load"/>
-     </node>
--</launch>
-\ No newline at end of file
-+</launch>
 --- a/src/open_mower/launch/test_playback.launch
 +++ b/src/open_mower/launch/test_playback.launch
 @@ -16,14 +16,14 @@
