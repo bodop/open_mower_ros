@@ -1,0 +1,16 @@
+Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
+===================================================================
+--- open_mower_ros.orig/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
++++ open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
+@@ -541,9 +541,9 @@ bool MowingBehavior::execute_mowing_plan
+         }
+       }
+     }
+-  }
+ 
+-  mowerEnabled = false;
++    mowerEnabled = false; // Path finished
++  }
+ 
+   // true, if we have executed all paths
+   return currentMowingPath >= currentMowingPaths.size();
