@@ -7,3 +7,4 @@
 007-slicer-serial-make.patch
 008-dont-spin-while-idle
 009-charge-control
+010-dont-mow-in-transit
