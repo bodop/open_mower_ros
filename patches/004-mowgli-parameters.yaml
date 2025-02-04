@@ -1,14 +1,13 @@
 --- a/src/open_mower/params/docking_ftc_local_planner.yaml
 +++ b/src/open_mower/params/docking_ftc_local_planner.yaml
-@@ -1,6 +1,5 @@
+@@ -1,5 +1,5 @@
  DockingFTCPlanner:
 -  acceleration: 1.0
--  check_obstacles: false
 +  acceleration: 0.05
+   check_obstacles: false
+   oscillation_recovery: false
    debug_pid: false
-   forward_only: false
-   goal_timeout: 20.0
-@@ -16,14 +15,14 @@ DockingFTCPlanner:
+@@ -17,14 +17,14 @@ DockingFTCPlanner:
    kp_ang: 1.0
    kp_lat: 6.15
    kp_lon: 4.0
@@ -31,7 +30,7 @@
    speed_slow: 0.1
 --- a/src/open_mower/params/ftc_local_planner.yaml
 +++ b/src/open_mower/params/ftc_local_planner.yaml
-@@ -4,26 +4,26 @@ FTCPlanner:
+@@ -5,26 +5,26 @@ FTCPlanner:
    debug_pid: true
    forward_only: true
    goal_timeout: 20.0
