@@ -8,3 +8,4 @@
 008-dont-spin-while-idle
 009-charge-control
 010-dont-mow-in-transit
+011-only-abort-mowing

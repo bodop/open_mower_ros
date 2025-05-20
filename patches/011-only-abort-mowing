@@ -1,0 +1,13 @@
+--- a/src/mower_logic/src/mower_logic/mower_logic.cpp
++++ b/src/mower_logic/src/mower_logic/mower_logic.cpp
+@@ -585,9 +585,7 @@ void checkSafety(const ros::TimerEvent &
+     rain_detected = true;
+   }
+ 
+-  if (dockingNeeded && currentBehavior != &DockingBehavior::INSTANCE &&
+-      currentBehavior != &UndockingBehavior::RETRY_INSTANCE && currentBehavior != &IdleBehavior::INSTANCE &&
+-      currentBehavior != &IdleBehavior::DOCKED_INSTANCE) {
++  if (dockingNeeded && currentBehavior == &MowingBehavior::INSTANCE) {
+     ROS_INFO_STREAM(dockingReason.rdbuf());
+     abortExecution();
+   }
