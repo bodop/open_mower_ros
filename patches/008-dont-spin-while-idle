@@ -29,13 +29,10 @@
  
  // Current speed calculated by wheel ticks
  double vx = 0.0;
-@@ -76,36 +89,35 @@ ros::Time last_gps_time(0.0);
- ros::NodeHandle *paramNh;
- 
+@@ -78,35 +91,33 @@ ros::NodeHandle *paramNh;
  void onImu(const sensor_msgs::Imu::ConstPtr &msg) {
-+
-     if(!has_gyro) {
-         if(!skip_gyro_calibration) {
+     if (!has_gyro) {
+         if (!skip_gyro_calibration) {
 -            if (gyro_offset_samples == 0) {
 -                ROS_INFO_STREAM("Started gyro calibration");
 -                gyro_calibration_start = msg->header.stamp;
@@ -55,12 +52,11 @@
 -            }
 -            gyro_offset_samples = 0;
 -            ROS_INFO_STREAM("Calibrated gyro offset: " << gyro_offset);
-+          ROS_INFO_STREAM("Started gyro calibration");
++            ROS_INFO_STREAM("Started gyro calibration");
          } else {
--            ROS_WARN("Skipped gyro calibration");
+             ROS_WARN("Skipped gyro calibration");
 -            has_gyro = true;
 -            return;
-+          ROS_WARN("Skipped gyro calibration");
          }
 +        has_gyro = true;
 +        last_imu = *msg;
@@ -68,7 +64,7 @@
      }
  
 -    core.predict(vx, msg->angular_velocity.z - gyro_offset, (msg->header.stamp - last_imu.header.stamp).toSec());
--    auto x = core.updateSpeed(vx, msg->angular_velocity.z - gyro_offset,0.01);
+-    auto x = core.updateSpeed(vx, msg->angular_velocity.z - gyro_offset, 0.01);
 +    double angular_velocity=msg->angular_velocity.z-gyro_offset;
 +    if (!skip_gyro_calibration && frozen_duration>=FROZEN_DELAY) {
 +      if (fabs(angular_velocity)<frozen_angular_max_velocity) {
@@ -83,18 +79,21 @@
 +        frozen_duration=0;
 +      }
 +    }
-+
+ 
 +    core.predict(vx, angular_velocity, (msg->header.stamp - last_imu.header.stamp).toSec());
 +    auto x = core.updateSpeed(vx, angular_velocity, 0.01);
- 
++ 
      odometry.header.stamp = ros::Time::now();
      odometry.header.seq++;
-@@ -182,8 +194,37 @@ void onWheelTicks(const xbot_msgs::Wheel
+     odometry.header.frame_id = "map";
+@@ -182,10 +193,37 @@ void onWheelTicks(const xbot_msgs::Wheel
      }
      double dt = (msg->stamp - last_ticks.stamp).toSec();
  
--    double d_wheel_l = (double) (msg->wheel_ticks_rl - last_ticks.wheel_ticks_rl) * (1/(double)msg->wheel_tick_factor);
--    double d_wheel_r = (double) (msg->wheel_ticks_rr - last_ticks.wheel_ticks_rr) * (1/(double)msg->wheel_tick_factor);
+-    double d_wheel_l = (double) (msg->wheel_ticks_rl - last_ticks.wheel_ticks_rl) * (
+-                           1 / (double) msg->wheel_tick_factor);
+-    double d_wheel_r = (double) (msg->wheel_ticks_rr - last_ticks.wheel_ticks_rr) * (
+-                           1 / (double) msg->wheel_tick_factor);
 +    uint32_t dl=msg->wheel_ticks_rl - last_ticks.wheel_ticks_rl;
 +    uint32_t dr=msg->wheel_ticks_rr - last_ticks.wheel_ticks_rr;
 +
@@ -127,5 +126,5 @@
 +    double d_wheel_l = (double) dl * (1/(double)msg->wheel_tick_factor);
 +    double d_wheel_r = (double) dr * (1/(double)msg->wheel_tick_factor);
  
-     if(msg->wheel_direction_rl) {
+     if (msg->wheel_direction_rl) {
          d_wheel_l *= -1.0;

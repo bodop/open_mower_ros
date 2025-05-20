@@ -1,6 +1,6 @@
 --- a/src/lib/xbot_positioning/src/xbot_positioning.cpp
 +++ b/src/lib/xbot_positioning/src/xbot_positioning.cpp
-@@ -196,6 +196,11 @@ void onWheelTicks(const xbot_msgs::Wheel
+@@ -198,6 +198,11 @@ void onWheelTicks(const xbot_msgs::Wheel
      double d_ticks = (d_wheel_l + d_wheel_r) / 2.0;
      vx = d_ticks / dt;
  

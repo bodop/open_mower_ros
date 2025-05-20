@@ -1,46 +1,21 @@
 --- a/src/open_mower/launch/gamepad_remote_control.launch
 +++ b/src/open_mower/launch/gamepad_remote_control.launch
-@@ -6,5 +6,5 @@
+@@ -7,5 +7,5 @@
      <include file="$(find open_mower)/launch/include/_localization.launch"/>
      <include file="$(find open_mower)/launch/include/_teleop.launch"/>
  
 -    <node pkg="mower_map" type="mower_map_service" name="map_service" output="screen"/>
 +    <node pkg="mower_map" type="mower_map_service" name="map_service"/>
  </launch>
---- a/src/open_mower/launch/include/_gps.launch
-+++ b/src/open_mower/launch/include/_gps.launch
-@@ -7,7 +7,6 @@
-     <include if="$(env OM_USE_NTRIP)" file="$(find open_mower)/launch/include/_ntrip_client.launch" />
- 
-     <node pkg="xbot_driver_gps" type="driver_gps_node" name="xbot_driver_gps"
--          output="screen"
-           clear_params="true"
-           respawn="true"
-           respawn_delay="5">
 --- a/src/open_mower/launch/include/_localization.launch
 +++ b/src/open_mower/launch/include/_localization.launch
-@@ -1,7 +1,7 @@
+@@ -1,5 +1,5 @@
  <launch>
-     <arg name="use_legacy_localization" default="False"/>
-     <group unless="$(arg use_legacy_localization)">
--        <node pkg="xbot_positioning" type="xbot_positioning" name="xbot_positioning" output="screen" required="true">
-+        <node pkg="xbot_positioning" type="xbot_positioning" name="xbot_positioning" required="true">
-             <remap from="~imu_in" to="/imu/data_raw"/>
-             <remap from="~wheel_ticks_in" to="/mower/wheel_ticks"/>
-             <remap from="~xb_pose_in" to="xbot_driver_gps/xb_pose"/>
-@@ -9,10 +9,11 @@
-             <param name="max_gps_accuracy" value="0.2"/>
-             <param name="antenna_offset_x" value="$(env OM_ANTENNA_OFFSET_X)"/>
-             <param name="antenna_offset_y" value="$(env OM_ANTENNA_OFFSET_Y)"/>
-+            <param name="skip_gyro_calibration" value="false"/>
-         </node>
-     </group>
-     <group if="$(arg use_legacy_localization)">
--        <node pkg="mower_logic" type="mower_odometry" name="mower_odometry" output="screen" required="true">
-+        <node pkg="mower_logic" type="mower_odometry" name="mower_odometry" required="true">
-             <param name="imu_offset" value="$(env OM_IMU_OFFSET)"/>
-             <param name="gps_antenna_offset" value="$(env OM_GPS_ANTENNA_OFFSET)"/>
-             <param name="use_relative_position" value="$(env OM_USE_RELATIVE_POSITION)"/>
+-    <node pkg="xbot_positioning" type="xbot_positioning" name="xbot_positioning" output="screen" required="true">
++    <node pkg="xbot_positioning" type="xbot_positioning" name="xbot_positioning" required="true">
+         <remap from="~imu_in" to="/ll/imu/data_raw"/>
+         <remap from="~twist_in" to="/ll/diff_drive/measured_twist"/>
+         <remap from="~xb_pose_in" to="/ll/position/gps"/>
 --- a/src/open_mower/launch/include/_move_base.launch
 +++ b/src/open_mower/launch/include/_move_base.launch
 @@ -1,6 +1,6 @@
@@ -51,48 +26,36 @@
      <remap from="cmd_vel" to="/nav_vel"/>
      <rosparam file="$(find open_mower)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />
      <rosparam file="$(find open_mower)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
---- a/src/open_mower/launch/move_around.launch
-+++ b/src/open_mower/launch/move_around.launch
-@@ -10,9 +10,9 @@
- <!--    </include>-->
+--- a/src/open_mower/launch/open_mower.launch
++++ b/src/open_mower/launch/open_mower.launch
+@@ -9,29 +9,29 @@
+     </include>
  
  
 -    <node pkg="mower_map" type="mower_map_service" name="map_service" output="screen"/>
+-    <node pkg="mower_logic" type="mower_logic" name="mower_logic" output="screen">
 +    <node pkg="mower_map" type="mower_map_service" name="map_service"/>
- 
--    <node pkg="twist_mux" type="twist_mux" name="twist_mux" output="screen">
-+    <node pkg="twist_mux" type="twist_mux" name="twist_mux">
-         <remap from="cmd_vel_out" to="/cmd_vel"/>
- 
-         <rosparam file="$(find open_mower)/params/twist_mux_topics.yaml"  command="load"/>
---- a/src/open_mower/launch/open_mower.launch
-+++ b/src/open_mower/launch/open_mower.launch
-@@ -42,15 +42,15 @@
-         <param name="rain_delay_minutes" value="$(optenv OM_RAIN_DELAY_MINUTES 30)"/>
-         <param name="rain_check_seconds" value="$(optenv OM_RAIN_CHECK_SECONDS 20)"/>
++    <node pkg="mower_logic" type="mower_logic" name="mower_logic">
      </node>
 -    <node pkg="slic3r_coverage_planner" type="slic3r_coverage_planner" name="slic3r_coverage_planner" output="screen"/>
 +    <node pkg="slic3r_coverage_planner" type="slic3r_coverage_planner" name="slic3r_coverage_planner"/>
  
 -    <node pkg="twist_mux" type="twist_mux" name="twist_mux" output="screen">
 +    <node pkg="twist_mux" type="twist_mux" name="twist_mux">
-         <remap from="cmd_vel_out" to="/cmd_vel"/>
+         <remap from="cmd_vel_out" to="/ll/cmd_vel"/>
  
-         <rosparam file="$(find open_mower)/params/twist_mux_topics.yaml"  command="load"/>
+         <rosparam file="$(find open_mower)/params/twist_mux_topics.yaml" command="load"/>
      </node>
  
--    <node pkg="xbot_monitoring" type="xbot_monitoring" name="xbot_monitoring" output="screen" respawn="true" respawn_delay="10">
-+    <node pkg="xbot_monitoring" type="xbot_monitoring" name="xbot_monitoring" respawn="true" respawn_delay="10">
-         <param name="external_mqtt_enable" value="$(optenv OM_MQTT_ENABLE False)" />
-         <param name="external_mqtt_hostname" value="$(optenv OM_MQTT_HOSTNAME)" />
-         <param name="external_mqtt_port" value="$(optenv OM_MQTT_PORT)" />
-@@ -61,13 +61,13 @@
+-    <node pkg="xbot_monitoring" type="xbot_monitoring" name="xbot_monitoring" output="screen" respawn="true"
++    <node pkg="xbot_monitoring" type="xbot_monitoring" name="xbot_monitoring" respawn="true"
+           respawn_delay="10">
          <remap from="/xbot_monitoring/remote_cmd_vel" to="/joy_vel"/>
      </node>
  
--    <node pkg="xbot_monitoring" type="heatmap_generator" name="heatmap_generator" output="screen" respawn="true" respawn_delay="10" unless="$(eval optenv('OM_HEATMAP_SENSOR_IDS', 'UNSET') == 'UNSET')">
-+    <node pkg="xbot_monitoring" type="heatmap_generator" name="heatmap_generator" respawn="true" respawn_delay="10" unless="$(eval optenv('OM_HEATMAP_SENSOR_IDS', 'UNSET') == 'UNSET')">
-         <param name="sensor_ids" value="$(optenv OM_HEATMAP_SENSOR_IDS)" />
+-    <node pkg="xbot_monitoring" type="heatmap_generator" name="heatmap_generator" output="screen" respawn="true"
++    <node pkg="xbot_monitoring" type="heatmap_generator" name="heatmap_generator" respawn="true"
+           respawn_delay="10" unless="$(eval optenv('OM_HEATMAP_SENSOR_IDS', 'UNSET') == 'UNSET')">
      </node>
  
 -    <node pkg="xbot_remote" type="xbot_remote" name="xbot_remote" output="screen" respawn="true" respawn_delay="10">
@@ -105,33 +68,12 @@
  </launch>
 --- a/src/open_mower/launch/sim_navigation.launch
 +++ b/src/open_mower/launch/sim_navigation.launch
-@@ -9,7 +9,7 @@
-     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find open_mower)/rviz/sim_navigation_test.rviz" required="true" />
-     <node pkg="mower_map" type="mower_map_service" name="mower_map" required="true" />
+@@ -11,7 +11,7 @@
+           required="true"/>
+     <node pkg="mower_map" type="mower_map_service" name="mower_map" required="true"/>
  
 -    <node pkg="twist_mux" type="twist_mux" name="twist_mux" output="screen">
 +    <node pkg="twist_mux" type="twist_mux" name="twist_mux">
          <remap from="cmd_vel_out" to="/cmd_vel"/>
  
-         <rosparam file="$(find open_mower)/params/twist_mux_topics.yaml"  command="load"/>
---- a/src/open_mower/launch/test_playback.launch
-+++ b/src/open_mower/launch/test_playback.launch
-@@ -16,14 +16,14 @@
-         <param name="frame" value="map"/>
-     </node>
- 
--    <node pkg="xbot_monitoring" type="xbot_monitoring" name="xbot_monitoring" output="screen" required="true">
-+    <node pkg="xbot_monitoring" type="xbot_monitoring" name="xbot_monitoring" required="true">
-     </node>
--    <node pkg="mower_map" type="mower_map_service" name="map_service" output="screen"/>
--    <node pkg="mower_logic" type="monitoring" name="monitoring" output="screen"/>
-+    <node pkg="mower_map" type="mower_map_service" name="map_service"/>
-+    <node pkg="mower_logic" type="monitoring" name="monitoring"/>
- 
- 
- 
--        <node pkg="xbot_positioning" type="xbot_positioning" name="xbot_positioning_playback" output="screen" required="true">
-+        <node pkg="xbot_positioning" type="xbot_positioning" name="xbot_positioning_playback" required="true">
-             <remap from="~imu_in" to="/imu/data_raw" />
-             <remap from="~wheel_ticks_in" to="/mower/wheel_ticks" />
-             <remap from="~xb_pose_in" to="xbot_driver_gps/xb_pose" />
+         <rosparam file="$(find open_mower)/params/twist_mux_topics.yaml" command="load"/>

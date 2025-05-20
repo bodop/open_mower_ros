@@ -1,6 +1,6 @@
 --- a/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
 +++ b/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
-@@ -264,15 +264,7 @@ Behavior* PerimeterFollowBehavior::execu
+@@ -267,15 +267,7 @@ Behavior* PerimeterFollowBehavior::execu
        continue;
      }
      /* Turn into direction of perimeter */
@@ -17,7 +17,7 @@
        /* Outer coil is inside */
        vel.linear.x = 0;
        vel.angular.z = -ANGULAR_SPEED * direction;
-@@ -280,6 +272,14 @@ Behavior* PerimeterFollowBehavior::execu
+@@ -283,6 +275,14 @@ Behavior* PerimeterFollowBehavior::execu
          tries = 240;
          state = FOLLOW_STATE_TURN_OUT;
        }

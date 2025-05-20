@@ -1,41 +1,6 @@
---- a/src/lib/ntrip_client/scripts/ntrip_ros.py
-+++ b/src/lib/ntrip_client/scripts/ntrip_ros.py
-@@ -116,11 +116,6 @@ class NTRIPRos:
-     # Setup a shutdown hook
-     rospy.on_shutdown(self.stop)
- 
--    # Connect the client
--    if not self._client.connect():
--      rospy.logerr('Unable to connect to NTRIP server')
--      return 1
--
-     # Setup our subscriber
-     self._nmea_sub = rospy.Subscriber('nmea', Sentence, self.subscribe_nmea, queue_size=10)
- 
-@@ -141,9 +136,19 @@ class NTRIPRos:
- 
-   def subscribe_nmea(self, nmea):
-     # Just extract the NMEA from the message, and send it right to the server
--    self._client.send_nmea(nmea.sentence)
-+    if self._client._connected:
-+      self._client.send_nmea(nmea.sentence)
- 
-   def publish_rtcm(self, event):
-+    if self._rtcm_pub.get_num_connections()==0:
-+      if self._client._connected:
-+        self._client.disconnect()
-+      return
-+    if not self._client._connected:
-+      # Connect the client
-+      if not self._client.connect():
-+        rospy.logerr('Unable to connect to NTRIP server')
-+        return
-     for raw_rtcm in self._client.recv_rtcm():
-       self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
- 
 --- a/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
 +++ b/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
-@@ -24,6 +24,8 @@
+@@ -26,6 +26,8 @@
  using namespace xbot::driver::gps;
  using namespace nmea;
  
@@ -44,7 +9,7 @@
  ros::Publisher pose_pub;
  ros::Publisher xbot_pose_pub;
  ros::Publisher latency_pub1;
-@@ -187,13 +189,27 @@ void convert_gps_result(const GpsInterfa
+@@ -189,13 +191,27 @@ void convert_gps_result(const GpsInterfa
  }
  
  void gps_state_received(const GpsInterface::GpsState &state) {
@@ -76,7 +41,7 @@
  }
  
  void
-@@ -226,7 +242,7 @@ int main(int argc, char **argv) {
+@@ -228,7 +244,7 @@ int main(int argc, char **argv) {
  
      ros::init(argc, argv, "xbot_driver_gps");
  
@@ -85,7 +50,7 @@
      ros::NodeHandle paramNh("~");
  
      isUbxInterface = paramNh.param("ubx_mode", true);
-@@ -277,11 +293,8 @@ int main(int argc, char **argv) {
+@@ -290,11 +306,8 @@ int main(int argc, char **argv) {
      // Subscribe to wheel ticks
      ros::Subscriber wheel_tick_sub = paramNh.subscribe("wheel_ticks", 0, wheel_tick_received,
                                                         ros::TransportHints().tcpNoDelay(true));
@@ -107,14 +72,14 @@
 -bool gps_enabled = true;
  int gps_outlier_count = 0;
  int valid_gps_samples = 0;
- int gps_message_throttle=1;
+ int gps_message_throttle = 1;
  
  ros::Time last_gps_time(0.0);
  
 +ros::NodeHandle *paramNh;
  
  void onImu(const sensor_msgs::Imu::ConstPtr &msg) {
-     if(!has_gyro) {
+     if (!has_gyro) {
 @@ -160,7 +160,7 @@ void onImu(const sensor_msgs::Imu::Const
          xb_absolute_pose_msg.flags |= xbot_msgs::AbsolutePose::FLAG_SENSOR_FUSION_RECENT_ABSOLUTE_POSE;
      } else {
@@ -124,8 +89,8 @@
      }
      // TODO: set real value
      xb_absolute_pose_msg.orientation_accuracy = 0.01;
-@@ -199,11 +199,6 @@ void onWheelTicks(const xbot_msgs::Wheel
-     last_ticks = *msg;
+@@ -205,11 +205,6 @@ void onTwistIn(const geometry_msgs::Twis
+     vx = msg->twist.linear.x;
  }
  
 -bool setGpsState(xbot_positioning::GPSControlSrvRequest &req, xbot_positioning::GPSControlSrvResponse &res) {
@@ -136,19 +101,20 @@
  bool setPose(xbot_positioning::SetPoseSrvRequest &req, xbot_positioning::SetPoseSrvResponse &res) {
      tf2::Quaternion q;
      tf2::fromMsg(req.robot_pose.orientation, q);
-@@ -218,10 +213,6 @@ bool setPose(xbot_positioning::SetPoseSr
+@@ -224,11 +219,6 @@ bool setPose(xbot_positioning::SetPoseSr
  }
  
  void onPose(const xbot_msgs::AbsolutePose::ConstPtr &msg) {
--    if(!gps_enabled) {        
+-    if (!gps_enabled) {
 -        ROS_INFO_STREAM_THROTTLE(gps_message_throttle, "dropping GPS update, since gps_enabled = false.");
 -        return;
 -    }
-     // TODO fuse with high covariance?
-     if((msg->flags & (xbot_msgs::AbsolutePose::FLAG_GPS_RTK_FIXED)) == 0) {
+-    // TODO fuse with high covariance?
+     if ((msg->flags & (xbot_msgs::AbsolutePose::FLAG_GPS_RTK_FIXED)) == 0) {
          ROS_INFO_STREAM_THROTTLE(1, "Dropped GPS update, since it's not RTK Fixed");
-@@ -300,11 +291,27 @@ void onPose(const xbot_msgs::AbsolutePos
- 
+         return;
+@@ -308,11 +298,27 @@ void onPose(const xbot_msgs::AbsolutePos
+     }
  }
  
 +static void set_gps_state(bool enable) {
@@ -176,13 +142,12 @@
      vx = 0.0;
      has_gyro = false;
      has_ticks = false;
-@@ -317,19 +324,19 @@ int main(int argc, char **argv) {
+@@ -325,19 +331,19 @@ int main(int argc, char **argv) {
      antenna_offset_x = antenna_offset_y = 0;
  
      ros::NodeHandle n;
 -    ros::NodeHandle paramNh("~");
 +    paramNh=new ros::NodeHandle("~");
-+
  
      ros::ServiceServer gps_service = n.advertiseService("xbot_positioning/set_gps_state", setGpsState);
      ros::ServiceServer pose_service = n.advertiseService("xbot_positioning/set_robot_pose", setPose);
@@ -194,7 +159,7 @@
 -    paramNh.param("debug", publish_debug, false);
 -    paramNh.param("antenna_offset_x", antenna_offset_x, 0.0);
 -    paramNh.param("antenna_offset_y", antenna_offset_y, 0.0);
--    paramNh.param("gps_message_throttle", gps_message_throttle, 1);    
+-    paramNh.param("gps_message_throttle", gps_message_throttle, 1);
 +    paramNh->param("skip_gyro_calibration", skip_gyro_calibration, false);
 +    paramNh->param("gyro_offset", gyro_offset, 0.0);
 +    paramNh->param("min_speed", min_speed, 0.01);
@@ -202,10 +167,11 @@
 +    paramNh->param("debug", publish_debug, false);
 +    paramNh->param("antenna_offset_x", antenna_offset_x, 0.0);
 +    paramNh->param("antenna_offset_y", antenna_offset_y, 0.0);
++    paramNh->param("gps_message_throttle", gps_message_throttle, 1);
  
      core.setAntennaOffset(antenna_offset_x, antenna_offset_y);
  
-@@ -339,17 +346,18 @@ int main(int argc, char **argv) {
+@@ -347,18 +353,20 @@ int main(int argc, char **argv) {
          ROS_WARN_STREAM("Using gyro offset of: " << gyro_offset);
      }
  
@@ -213,7 +179,7 @@
 -    xbot_absolute_pose_pub = paramNh.advertise<xbot_msgs::AbsolutePose>("xb_pose_out", 50);
 +    odometry_pub = paramNh->advertise<nav_msgs::Odometry>("odom_out", 50);
 +    xbot_absolute_pose_pub = paramNh->advertise<xbot_msgs::AbsolutePose>("xb_pose_out", 50);
-     if(publish_debug) {
+     if (publish_debug) {
 -        dbg_expected_motion_vector = paramNh.advertise<geometry_msgs::Vector3>("debug_expected_motion_vector", 50);
 -        kalman_state = paramNh.advertise<xbot_positioning::KalmanState>("kalman_state", 50);
 +        dbg_expected_motion_vector = paramNh->advertise<geometry_msgs::Vector3>("debug_expected_motion_vector", 50);
@@ -221,9 +187,12 @@
      }
  
 -    ros::Subscriber imu_sub = paramNh.subscribe("imu_in", 10, onImu);
+-    ros::Subscriber twist_sub = paramNh.subscribe("twist_in", 10, onTwistIn);
 -    ros::Subscriber pose_sub = paramNh.subscribe("xb_pose_in", 10, onPose);
 -    ros::Subscriber wheel_tick_sub = paramNh.subscribe("wheel_ticks_in", 10, onWheelTicks);
 +    ros::Subscriber imu_sub = paramNh->subscribe("imu_in", 10, onImu);
++    ros::Subscriber twist_sub = paramNh->subscribe("twist_in", 10, onTwistIn);
++    ros::Subscriber pose_sub = paramNh->subscribe("xb_pose_in", 10, onPose);
 +    ros::Subscriber wheel_tick_sub = paramNh->subscribe("wheel_ticks_in", 10, onWheelTicks);
  
 +    set_gps_state(true);
@@ -231,3 +200,43 @@
      ros::spin();
      return 0;
  }
+--- a/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
++++ b/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
+@@ -82,11 +82,6 @@ class NTRIPRosBase:
+     # Setup a shutdown hook
+     rospy.on_shutdown(self.stop)
+ 
+-    # Connect the client
+-    if not self._client.connect():
+-      rospy.logerr('Unable to connect to NTRIP server')
+-      return 1
+-
+     # Setup our subscriber
+     self._nmea_sub = rospy.Subscriber('nmea', Sentence, self.subscribe_nmea, queue_size=10)
+     self._fix_sub = rospy.Subscriber('fix', NavSatFix, self.subscribe_fix, queue_size=10)
+@@ -109,7 +104,8 @@ class NTRIPRosBase:
+ 
+   def subscribe_nmea(self, nmea):
+     # Just extract the NMEA from the message, and send it right to the server
+-    self._client.send_nmea(nmea.sentence)
++    if (self._client._connected)
++      self._client.send_nmea(nmea.sentence)
+ 
+   def subscribe_fix(self, fix: NavSatFix):
+     # Calculate the timestamp of the message
+@@ -155,6 +151,15 @@ class NTRIPRosBase:
+ 
+ 
+   def publish_rtcm(self, event):
++    if self._rtcm_pub.get_num_connections()==0:
++      if self._client._connected:
++        self._client.disconnect()
++      return
++    if not self._client._connected:
++      # Connect the client
++      if not self._client.connect():
++        rospy.logerr('Unable to connect to NTRIP server')
++        return
+     for raw_rtcm in self._client.recv_rtcm():
+       self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
+ 
