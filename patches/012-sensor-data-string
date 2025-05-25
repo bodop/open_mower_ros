@@ -1,0 +1,19 @@
+Index: open_mower_ros/src/mower_logic/src/monitoring/monitoring.cpp
+===================================================================
+--- open_mower_ros.orig/src/mower_logic/src/monitoring/monitoring.cpp
++++ open_mower_ros/src/mower_logic/src/monitoring/monitoring.cpp
+@@ -293,8 +293,13 @@ void registerSensors() {
+ 
+     sc_pair.second.si_pub =
+         n->advertise<xbot_msgs::SensorInfo>("xbot_monitoring/sensors/" + sc_pair.first + "/info", 1, true);
+-    sc_pair.second.data_pub =
++    if (sc_pair.second.si.value_type==xbot_msgs::SensorInfo::TYPE_STRING) {
++      sc_pair.second.data_pub =
++        n->advertise<xbot_msgs::SensorDataString>("xbot_monitoring/sensors/" + sc_pair.first + "/data", 10);
++    } else {
++      sc_pair.second.data_pub =
+         n->advertise<xbot_msgs::SensorDataDouble>("xbot_monitoring/sensors/" + sc_pair.first + "/data", 10);
++    }
+     sc_pair.second.si_pub.publish(sc_pair.second.si);
+   }
+ }
