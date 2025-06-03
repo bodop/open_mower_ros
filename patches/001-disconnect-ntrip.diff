@@ -2,7 +2,21 @@ Index: open_mower_ros/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
 ===================================================================
 --- open_mower_ros.orig/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
 +++ open_mower_ros/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
-@@ -26,6 +26,8 @@
+@@ -1,3 +1,13 @@
++/* Message flow:
++ * 
++ * ntrip_client "/ll/position/gps/rtcm" => xbot_driver_gps(driver_gps_node.cpp) "rtcm"
++ * xbot_driver_gps(driver_gps_node.cpp)
++       "nmea"="/ll/position/gps/nmea" => ntrip_client,
++       "pose"="/xbot_driver_gps/pose" => /dev/null,
++       "xb_pose"="/ll/position/gps" => xbot_positioning
++       "imu" = "/xbot_driver/gps/imu" => /dev/null
++ *
++ */
+ //
+ // Created by Clemens Elflein on 14.10.22.
+ // Copyright (c) 2022 Clemens Elflein. All rights reserved.
+@@ -26,6 +36,8 @@
  using namespace xbot::driver::gps;
  using namespace nmea;
  
@@ -11,7 +25,7 @@ Index: open_mower_ros/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
  ros::Publisher pose_pub;
  ros::Publisher xbot_pose_pub;
  ros::Publisher latency_pub1;
-@@ -189,13 +191,27 @@ void convert_gps_result(const GpsInterfa
+@@ -189,13 +201,27 @@ void convert_gps_result(const GpsInterfa
  }
  
  void gps_state_received(const GpsInterface::GpsState &state) {
@@ -43,7 +57,7 @@ Index: open_mower_ros/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
  }
  
  void
-@@ -228,7 +244,7 @@ int main(int argc, char **argv) {
+@@ -228,7 +254,7 @@ int main(int argc, char **argv) {
  
      ros::init(argc, argv, "xbot_driver_gps");
  
@@ -52,7 +66,7 @@ Index: open_mower_ros/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
      ros::NodeHandle paramNh("~");
  
      isUbxInterface = paramNh.param("ubx_mode", true);
-@@ -290,11 +306,8 @@ int main(int argc, char **argv) {
+@@ -290,11 +316,8 @@ int main(int argc, char **argv) {
      // Subscribe to wheel ticks
      ros::Subscriber wheel_tick_sub = paramNh.subscribe("wheel_ticks", 0, wheel_tick_received,
                                                         ros::TransportHints().tcpNoDelay(true));
@@ -175,7 +189,7 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
  
      core.setAntennaOffset(antenna_offset_x, antenna_offset_y);
  
-@@ -347,18 +353,20 @@ int main(int argc, char **argv) {
+@@ -347,18 +353,19 @@ int main(int argc, char **argv) {
          ROS_WARN_STREAM("Using gyro offset of: " << gyro_offset);
      }
  
@@ -196,7 +210,6 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
 -    ros::Subscriber wheel_tick_sub = paramNh.subscribe("wheel_ticks_in", 10, onWheelTicks);
 +    ros::Subscriber imu_sub = paramNh->subscribe("imu_in", 10, onImu);
 +    ros::Subscriber twist_sub = paramNh->subscribe("twist_in", 10, onTwistIn);
-+    ros::Subscriber pose_sub = paramNh->subscribe("xb_pose_in", 10, onPose);
 +    ros::Subscriber wheel_tick_sub = paramNh->subscribe("wheel_ticks_in", 10, onWheelTicks);
  
 +    set_gps_state(true);

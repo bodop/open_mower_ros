@@ -1,5 +1,7 @@
---- a/src/lib/xbot_positioning/src/xbot_positioning.cpp
-+++ b/src/lib/xbot_positioning/src/xbot_positioning.cpp
+Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
+===================================================================
+--- open_mower_ros.orig/src/lib/xbot_positioning/src/xbot_positioning.cpp
++++ open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
 @@ -41,12 +41,25 @@ xbot_msgs::WheelTick last_ticks;
  bool has_gps;
  xbot_msgs::AbsolutePose last_gps;
@@ -83,7 +85,7 @@
 +
 +    core.predict(vx, angular_velocity, (msg->header.stamp - last_imu.header.stamp).toSec());
 +    auto x = core.updateSpeed(vx, angular_velocity, 0.01);
-+ 
++
      odometry.header.stamp = ros::Time::now();
      odometry.header.seq++;
      odometry.header.frame_id = "map";
@@ -156,10 +158,10 @@
  }
  
  bool setPose(xbot_positioning::SetPoseSrvRequest &req, xbot_positioning::SetPoseSrvResponse &res) {
-@@ -368,7 +375,6 @@ int main(int argc, char **argv) {
+@@ -367,7 +374,6 @@ int main(int argc, char **argv) {
+ 
      ros::Subscriber imu_sub = paramNh->subscribe("imu_in", 10, onImu);
      ros::Subscriber twist_sub = paramNh->subscribe("twist_in", 10, onTwistIn);
-     ros::Subscriber pose_sub = paramNh->subscribe("xb_pose_in", 10, onPose);
 -    ros::Subscriber wheel_tick_sub = paramNh->subscribe("wheel_ticks_in", 10, onWheelTicks);
  
      set_gps_state(true);
