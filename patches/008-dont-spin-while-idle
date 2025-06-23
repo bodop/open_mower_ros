@@ -31,7 +31,7 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
  
  // Current speed calculated by wheel ticks
  double vx = 0.0;
-@@ -78,35 +91,33 @@ ros::NodeHandle *paramNh;
+@@ -78,34 +91,32 @@ ros::NodeHandle *paramNh;
  void onImu(const sensor_msgs::Imu::ConstPtr &msg) {
      if (!has_gyro) {
          if (!skip_gyro_calibration) {
@@ -63,11 +63,8 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
 +        has_gyro = true;
 +        last_imu = *msg;
 +        return;
-     }
- 
--    core.predict(vx, msg->angular_velocity.z - gyro_offset, (msg->header.stamp - last_imu.header.stamp).toSec());
--    auto x = core.updateSpeed(vx, msg->angular_velocity.z - gyro_offset, 0.01);
--
++    }
++
 +    double angular_velocity=msg->angular_velocity.z-gyro_offset;
 +    if (!skip_gyro_calibration && frozen_duration>=FROZEN_DELAY) {
 +      if (fabs(angular_velocity)<frozen_angular_max_velocity) {
@@ -81,14 +78,15 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
 +        ROS_WARN("External movement detected");
 +        frozen_duration=0;
 +      }
-+    }
-+
+     }
+ 
+-    core.predict(vx, msg->angular_velocity.z - gyro_offset, (msg->header.stamp - last_imu.header.stamp).toSec());
+-    auto x = core.updateSpeed(vx, msg->angular_velocity.z - gyro_offset, 0.01);
 +    core.predict(vx, angular_velocity, (msg->header.stamp - last_imu.header.stamp).toSec());
 +    auto x = core.updateSpeed(vx, angular_velocity, 0.01);
-+
+ 
      odometry.header.stamp = ros::Time::now();
      odometry.header.seq++;
-     odometry.header.frame_id = "map";
 @@ -174,40 +185,36 @@ void onImu(const sensor_msgs::Imu::Const
      last_imu = *msg;
  }
@@ -140,7 +138,7 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
 +        gyro_offset = gyro_offset_s / gyro_offset_samples;
 +        /* Calculate deviation */
 +        double deviation = sqrt((gyro_offset_s2-gyro_offset_s*gyro_offset_s/gyro_offset_samples)/(gyro_offset_samples-1));
-+        frozen_angular_max_velocity=deviation*5;
++        frozen_angular_max_velocity=deviation*5+0.06; // At least one revolution in two minutes.
 +        /* Reset statistic */
 +        gyro_offset_s = gyro_offset_s2 = gyro_offset_samples = 0;
 +
