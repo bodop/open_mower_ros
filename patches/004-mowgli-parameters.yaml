@@ -1,5 +1,7 @@
---- a/src/open_mower/params/docking_ftc_local_planner.yaml
-+++ b/src/open_mower/params/docking_ftc_local_planner.yaml
+Index: open_mower_ros/src/open_mower/params/docking_ftc_local_planner.yaml
+===================================================================
+--- open_mower_ros.orig/src/open_mower/params/docking_ftc_local_planner.yaml
++++ open_mower_ros/src/open_mower/params/docking_ftc_local_planner.yaml
 @@ -1,5 +1,5 @@
  DockingFTCPlanner:
 -  acceleration: 1.0
@@ -28,8 +30,10 @@
 +  speed_fast_threshold: 0.3
    speed_fast_threshold_angle: 5.0
    speed_slow: 0.1
---- a/src/open_mower/params/ftc_local_planner.yaml
-+++ b/src/open_mower/params/ftc_local_planner.yaml
+Index: open_mower_ros/src/open_mower/params/ftc_local_planner.yaml
+===================================================================
+--- open_mower_ros.orig/src/open_mower/params/ftc_local_planner.yaml
++++ open_mower_ros/src/open_mower/params/ftc_local_planner.yaml
 @@ -5,26 +5,26 @@ FTCPlanner:
    debug_pid: true
    forward_only: true

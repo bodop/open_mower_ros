@@ -221,19 +221,17 @@ Index: open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
 ===================================================================
 --- open_mower_ros.orig/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
 +++ open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
-@@ -82,11 +82,6 @@ class NTRIPRosBase:
+@@ -84,9 +84,6 @@ class NTRIPRosBase:
      # Setup a shutdown hook
      rospy.on_shutdown(self.stop)
  
--    # Connect the client
--    if not self._client.connect():
--      rospy.logerr('Unable to connect to NTRIP server')
--      return 1
+-    # Start the client's reconnection loop
+-    self._client.reconnect(initial = True)
 -
      # Setup our subscriber
      self._nmea_sub = rospy.Subscriber('nmea', Sentence, self.subscribe_nmea, queue_size=10)
      self._fix_sub = rospy.Subscriber('fix', NavSatFix, self.subscribe_fix, queue_size=10)
-@@ -109,7 +104,8 @@ class NTRIPRosBase:
+@@ -109,7 +106,8 @@ class NTRIPRosBase:
  
    def subscribe_nmea(self, nmea):
      # Just extract the NMEA from the message, and send it right to the server
@@ -243,7 +241,7 @@ Index: open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
  
    def subscribe_fix(self, fix: NavSatFix):
      # Calculate the timestamp of the message
-@@ -155,6 +151,15 @@ class NTRIPRosBase:
+@@ -155,6 +153,15 @@ class NTRIPRosBase:
  
  
    def publish_rtcm(self, event):
@@ -263,7 +261,7 @@ Index: open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_client.py
 ===================================================================
 --- open_mower_ros.orig/src/lib/ntrip_client/src/ntrip_client/ntrip_client.py
 +++ open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_client.py
-@@ -65,6 +65,7 @@ class NTRIPClient(NTRIPBase):
+@@ -64,6 +64,7 @@ class NTRIPClient(NTRIPBase):
      self.rtcm_timeout_seconds = self.DEFAULT_RTCM_TIMEOUT_SECONDS
  
    def connect(self):

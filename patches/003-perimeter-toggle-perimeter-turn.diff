@@ -1,5 +1,7 @@
---- a/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
-+++ b/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
+Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
+===================================================================
+--- open_mower_ros.orig/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
++++ open_mower_ros/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
 @@ -267,15 +267,7 @@ Behavior* PerimeterFollowBehavior::execu
        continue;
      }

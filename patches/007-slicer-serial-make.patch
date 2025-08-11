@@ -1,5 +1,7 @@
---- a/src/lib/slic3r_coverage_planner/CMakeLists.txt
-+++ b/src/lib/slic3r_coverage_planner/CMakeLists.txt
+Index: open_mower_ros/src/lib/slic3r_coverage_planner/CMakeLists.txt
+===================================================================
+--- open_mower_ros.orig/src/lib/slic3r_coverage_planner/CMakeLists.txt
++++ open_mower_ros/src/lib/slic3r_coverage_planner/CMakeLists.txt
 @@ -36,7 +36,7 @@ ExternalProject_Add(
          CMAKE_CACHE_ARGS
          SOURCE_SUBDIR src
