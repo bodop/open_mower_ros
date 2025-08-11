@@ -28,10 +28,9 @@
         <rosparam unless="$(eval env('OM_MOWER')=='CUSTOM')"
                   ns="mower_comms"
                   file="$(find open_mower)/params/hardware_specific/$(env OM_MOWER)/comms_$(env OM_MOWER_ESC_TYPE)_params.yaml"/>
-        <rosparam if="$(eval env('OM_MOWER')=='CUSTOM')"
-                  ns="mower_comms"
-                  file="$(env HOME)/mower_params/comms_params.yaml"/>
-
+       <rosparam if="$(eval (env('OM_MOWER')=='CUSTOM') and (optenv('OM_NO_COMMS').lower() != 'true'))"
+              ns="mower_comms"
+              file="$(env HOME)/mower_params/comms_params.yaml"/>
         <param name="mower_comms/wheel_ticks_per_m" value="$(env OM_WHEEL_TICKS_PER_M)"/>
         <param name="mower_comms/wheel_distance_m" value="$(env OM_WHEEL_DISTANCE_M)"/>
         <param name="mower_comms/dfp_is_5v" value="$(optenv OM_DFP_IS_5V False)"/>
@@ -128,10 +127,13 @@
         <param name="mower_logic/undock_angle" value="$(optenv OM_UNDOCK_ANGLE 0.0)"/>
         <param name="mower_logic/undock_fixed_angle" value="$(optenv OM_UNDOCK_FIXED_ANGLE True)"/>
         <param name="mower_logic/undock_use_curve" value="$(optenv OM_UNDOCK_USE_CURVE True)"/>
+        <param name="mower_logic/docking_waiting_time" value="$(optenv OM_DOCKING_WAIT_TIME 0.0)"/>
+        <param name="mower_logic/undocking_waiting_time" value="$(optenv OM_UNDOCKING_WAIT_TIME 0.0)"/>
         <param name="mower_logic/emergency_lift_period" value="$(optenv OM_EMERGENCY_LIFT_PERIOD -1)"/>
         <param name="mower_logic/emergency_tilt_period" value="$(optenv OM_EMERGENCY_TILT_PERIOD -1)"/>
         <param name="mower_logic/emergency_input_config" value="$(optenv OM_EMERGENCY_INPUT_CONFIG)"/>
         <param name="mower_logic/ignore_charging_current" value="$(optenv OM_IGNORE_CHARGING_CURRENT False)"/>
+        <param name="mower_logic/shutdown_esc_max_pitch" value="$(optenv OM_SHUTDOWN_ESC_MAX_PITCH 0)"/>
 
         <!-- xbot_monitoring -->
         <param name="xbot_monitoring/external_mqtt_enable" value="$(optenv OM_MQTT_ENABLE False)"/>

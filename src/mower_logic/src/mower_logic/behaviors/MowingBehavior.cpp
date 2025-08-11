@@ -1,19 +1,16 @@
 // Created by Clemens Elflein on 2/21/22.
-// Copyright (c) 2022 Clemens Elflein. All rights reserved.
+// Copyright (c) 2022 Clemens Elflein and OpenMower contributors. All rights reserved.
 //
-// This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+// This file is part of OpenMower.
 //
-// Feel free to use the design in your private/educational projects, but don't try to sell the design or products based
-// on it without getting my consent first.
+// OpenMower is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+// License as published by the Free Software Foundation, version 3 of the License.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// OpenMower is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 //
+// You should have received a copy of the GNU General Public License along with OpenMower. If not, see
+// <https://www.gnu.org/licenses/>.
 //
 #include "MowingBehavior.h"
 
@@ -268,7 +265,7 @@ bool MowingBehavior::execute_mowing_plan() {
       paused = true;
       mowerEnabled = false;
       u_int8_t last_requested_pause_flags = 0;
-      while (requested_pause_flag)  // while emergency and/or manual pause not asked to continue, we wait
+      while (requested_pause_flag && !aborted)  // while emergency and/or manual pause not asked to continue, we wait
       {
         if (last_requested_pause_flags != requested_pause_flag) {
           update_actions();
@@ -293,7 +290,7 @@ bool MowingBehavior::execute_mowing_plan() {
     }
     if (paused) {
       paused_time = ros::Time::now();
-      while (!this->hasGoodGPS())  // while no good GPS we wait
+      while (!this->hasGoodGPS() && !aborted)  // while no good GPS we wait
       {
         ROS_INFO_STREAM("MowingBehavior: PAUSED (" << (ros::Time::now() - paused_time).toSec()
                                                    << "s) (waiting for GPS)");
@@ -553,7 +550,9 @@ void MowingBehavior::command_home() {
   if (shared_state->active_semiautomatic_task) {
     // We are in semiautomatic task, mark it as manually paused.
     ROS_INFO_STREAM("Manually pausing semiautomatic task");
-    shared_state->semiautomatic_task_paused = true;
+    auto config = getConfig();
+    config.manual_pause_mowing = true;
+    setConfig(config);
   }
   if (paused) {
     // Request continue to wait for odom
@@ -565,11 +564,13 @@ void MowingBehavior::command_home() {
 
 void MowingBehavior::command_start() {
   ROS_INFO_STREAM("MowingBehavior: MANUAL CONTINUE");
-  if (shared_state->active_semiautomatic_task && shared_state->semiautomatic_task_paused) {
+  auto config = getConfig();
+  if (shared_state->active_semiautomatic_task && config.manual_pause_mowing) {
     // We are in semiautomatic task and paused, user wants to resume, so store that immediately.
     // This way, once we are docked the mower will continue as soon as all other conditions are g2g
     ROS_INFO_STREAM("Resuming semiautomatic task");
-    shared_state->semiautomatic_task_paused = true;
+    config.manual_pause_mowing = false;
+    setConfig(config);
   }
   this->requestContinue();
 }
