@@ -99,7 +99,7 @@ Index: open_mower_ros/src/open_mower/launch/include/_gps.launch
 ===================================================================
 --- /dev/null
 +++ open_mower_ros/src/open_mower/launch/include/_gps.launch
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,30 @@
 +
 +<!--
 +    This launch file sets up the RTK GPS.
@@ -112,8 +112,7 @@ Index: open_mower_ros/src/open_mower/launch/include/_gps.launch
 +          clear_params="true"
 +          respawn="true"
 +          respawn_delay="5">
-+        <rosparam if="$(eval env('OM_MOWER')=='CUSTOM')" file="$(env HOME)/mower_params/gps_params.yaml"/>
-+        <rosparam unless="$(eval env('OM_MOWER')=='CUSTOM')" file="$(find open_mower)/params/hardware_specific/$(env OM_MOWER)/comms_gps_params.yaml"/>
++        <rosparam file="$(env PARAMS_PATH)/gps_params.yaml"/>
 +        <param if="$(eval optenv('OM_GPS_BAUDRATE')!='')" name="baudrate" value="$(optenv OM_GPS_BAUDRATE)"/>
 +        <param if="$(eval optenv('OM_GPS_PORT')!='')" name="serial_port" value="$(optenv OM_GPS_PORT)"/>
 +        <param name="device_type" value="$(optenv OM_GPS_DEVICE_TYPE serial)" />
