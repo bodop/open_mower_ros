@@ -5,13 +5,13 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
 @@ -377,6 +377,8 @@ bool isGpsGood() {
  /// /odom and /mower/status outages
  /// @param timer_event
- void checkSafety(const ros::TimerEvent &timer_event) {
+ void checkSafety(const ros::TimerEvent& timer_event) {
 +  static int gpsWasGood=1,gpsHadTimeout=0;
 +  
    const auto last_status = status_state_subscriber.getMessage();
    const auto last_emergency = emergency_state_subscriber.getMessage();
    const auto last_config = getConfig();
-@@ -449,7 +451,14 @@ void checkSafety(const ros::TimerEvent &
+@@ -449,7 +451,14 @@ void checkSafety(const ros::TimerEvent&
      setLastGoodGPS(ros::Time::now());
      high_level_status.gps_quality_percent =
          1.0 - fmin(1.0, last_pose.position_accuracy / last_config.max_position_accuracy);
@@ -27,7 +27,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
    } else {
      // GPS = bad, set quality to 0
      high_level_status.gps_quality_percent = 0;
-@@ -457,7 +466,10 @@ void checkSafety(const ros::TimerEvent &
+@@ -457,7 +466,10 @@ void checkSafety(const ros::TimerEvent&
        // set this if we don't even have an orientation
        high_level_status.gps_quality_percent = -1;
      }
@@ -39,7 +39,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
    }
  
    bool gpsTimeout = ros::Time::now() - last_good_gps > ros::Duration(last_config.gps_timeout);
-@@ -465,7 +477,12 @@ void checkSafety(const ros::TimerEvent &
+@@ -465,7 +477,12 @@ void checkSafety(const ros::TimerEvent&
    if (gpsTimeout) {
      // GPS = bad, set quality to 0
      high_level_status.gps_quality_percent = 0;
@@ -57,7 +57,7 @@ Index: open_mower_ros/src/lib/xbot_monitoring/src/heatmap_generator.cpp
 ===================================================================
 --- open_mower_ros.orig/src/lib/xbot_monitoring/src/heatmap_generator.cpp
 +++ open_mower_ros/src/lib/xbot_monitoring/src/heatmap_generator.cpp
-@@ -35,16 +35,24 @@ void onMap(const xbot_msgs::Map &mapInfo
+@@ -35,16 +35,24 @@ void onMapSize(const xbot_msgs::MapSize
  }
  
  void onSensorData(const std::string sensor_id, const xbot_msgs::SensorDataDouble::ConstPtr &msg) {
