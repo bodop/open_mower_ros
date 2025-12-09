@@ -1,0 +1,86 @@
+diff --git a/lib/views/robot_state_widget.dart b/lib/views/robot_state_widget.dart
+index b5e4f49..ce3b878 100644
+--- a/lib/views/robot_state_widget.dart
++++ b/lib/views/robot_state_widget.dart
+@@ -28,9 +28,25 @@ class RobotStateWidget extends GetView<RobotStateController> {
+   Widget build(BuildContext context) {
+     return Material(
+         elevation: 5,
+-        child: Obx(() =>n.Row([
+-          EmergencyWidget(emergency: controller.robotState.value.isEmergency),
+-          RichText(
++        child: Obx(() =>buildRow(controller))
++        );
++  }
++
++  n.Row buildRow(RobotStateController controller) {
++     List<Widget> l=[];
++     l.add(EmergencyWidget(emergency: controller.robotState.value.isEmergency));
++     if (controller.robotState.value.rainDetected) {
++     	l.add(RichText(
++              text: TextSpan(
++                  style: const TextStyle(color: Colors.black87),
++                  children: [
++                const TextSpan(text: "Rain: "),
++                WidgetSpan(
++                    child: Icon(Icons.water_drop, color: Colors.blue[200]),
++                    alignment: PlaceholderAlignment.middle),
++              ])));
++     };
++     l.add(RichText(
+               text: TextSpan(
+                   style: const TextStyle(color: Colors.black87),
+                   children: [
+@@ -38,7 +54,7 @@ class RobotStateWidget extends GetView<RobotStateController> {
+                 WidgetSpan(
+                     child: getMqttIcon(controller.robotState.value.isConnected),
+                     alignment: PlaceholderAlignment.middle),
+-              ])),
++              ])));
+           /*RichText(
+               text: const TextSpan(
+                   style: TextStyle(color: Colors.black87),
+@@ -49,7 +65,7 @@ class RobotStateWidget extends GetView<RobotStateController> {
+                         Icon(Icons.network_wifi_3_bar, color: Colors.black54),
+                     alignment: PlaceholderAlignment.middle),
+               ])),*/
+-          RichText(
++       l.add(RichText(
+               text: TextSpan(
+                   style: const TextStyle(color: Colors.black87),
+                   children: [
+@@ -57,8 +73,8 @@ class RobotStateWidget extends GetView<RobotStateController> {
+                 WidgetSpan(
+                     child: Obx(() => getGpsIcon(controller.robotState.value.gpsPercent)),
+                     alignment: PlaceholderAlignment.middle),
+-              ])),
+-          RichText(
++              ])));
++      l.add(RichText(
+               text: TextSpan(
+                   style: const TextStyle(color: Colors.black87),
+                   children: [
+@@ -67,12 +83,13 @@ class RobotStateWidget extends GetView<RobotStateController> {
+                     child: getBatteryIcon(controller.robotState.value.batteryPercent, controller.robotState.value.isCharging),
+                     alignment: PlaceholderAlignment.middle),
+               ]))
+-        ])
++        );
++     return n.Row(l)
+           ..mainAxisAlignment = MainAxisAlignment.end
+           ..m = 16
+-          ..gap = 8));
++          ..gap = 8;
+   }
+-
++  
+   /* Place this ugly function last.
+    * Needs to be that ugly for not require --no-tree-shake-icons build option (Flutter >= 1.22),
+    * which would disable Icon subsetting and thus blow up our code by about 350k
+@@ -126,4 +143,4 @@ class RobotStateWidget extends GetView<RobotStateController> {
+       }
+     }
+   }
+-}
+\ No newline at end of file
++}
