@@ -1,8 +1,6 @@
-Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
-===================================================================
---- open_mower_ros.orig/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
-+++ open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
-@@ -538,9 +538,9 @@ bool MowingBehavior::execute_mowing_plan
+--- a/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
++++ b/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
+@@ -551,9 +551,9 @@ bool MowingBehavior::execute_mowing_plan
          }
        }
      }
