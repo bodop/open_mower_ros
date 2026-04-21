@@ -15,11 +15,10 @@ Index: open_mower_ros/src/open_mower/params/docking_ftc_local_planner.yaml
    kp_lon: 4.0
 -  max_cmd_vel_ang: 3.1
 -  max_cmd_vel_speed: 0.6
--  max_follow_distance: 1.0
--  max_goal_angle_error: 20.0
 +  max_cmd_vel_ang: 0.5
 +  max_cmd_vel_speed: 0.2
-+  max_follow_distance: 0.5
+   max_follow_distance: 1.0
+-  max_goal_angle_error: 20.0
 +  max_goal_angle_error: 10.0
    max_goal_distance_error: 0.1
    restore_defaults: false
@@ -34,12 +33,14 @@ Index: open_mower_ros/src/open_mower/params/ftc_local_planner.yaml
 ===================================================================
 --- open_mower_ros.orig/src/open_mower/params/ftc_local_planner.yaml
 +++ open_mower_ros/src/open_mower/params/ftc_local_planner.yaml
-@@ -5,26 +5,26 @@ FTCPlanner:
+@@ -4,27 +4,27 @@ FTCPlanner:
+   oscillation_recovery: false
    debug_pid: true
    forward_only: true
-   goal_timeout: 20.0
+-  goal_timeout: 20.0
 -  kd_ang: 0.5
 -  kd_lat: 1.23
++  goal_timeout: 120.0
 +  kd_ang: 0
 +  kd_lat: 5.0
    kd_lon: 0.0
@@ -56,13 +57,12 @@ Index: open_mower_ros/src/open_mower/params/ftc_local_planner.yaml
 -  kp_lon: 4.0
 -  max_cmd_vel_ang: 3.1
 -  max_cmd_vel_speed: 1.0
--  max_follow_distance: 1.0
 +  kp_ang: 1.0
 +  kp_lat: 2.0
 +  kp_lon: 1.0
 +  max_cmd_vel_ang: 3.2
 +  max_cmd_vel_speed: 0.4
-+  max_follow_distance: 0.8
+   max_follow_distance: 1.0
    max_goal_angle_error: 20.0
    max_goal_distance_error: 0.2
    restore_defaults: false
