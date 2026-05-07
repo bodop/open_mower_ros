@@ -2,7 +2,15 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking
 ===================================================================
 --- open_mower_ros.orig/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
 +++ open_mower_ros/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking.cpp
-@@ -267,15 +267,7 @@ Behavior* PerimeterFollowBehavior::execu
+@@ -232,6 +232,7 @@ Behavior* PerimeterDockingBehavior::arri
+     chargeSeen++;
+     if (chargeSeen >= 2) {
+       chargeSeen = 0;
++      ROS_INFO("Reached docking station after travelling %.f meters", travelled);
+       return &IdleBehavior::DOCKED_INSTANCE;
+     }
+   } else {
+@@ -267,15 +268,7 @@ Behavior* PerimeterFollowBehavior::execu
        continue;
      }
      /* Turn into direction of perimeter */
@@ -19,7 +27,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/PerimeterDocking
        /* Outer coil is inside */
        vel.linear.x = 0;
        vel.angular.z = -ANGULAR_SPEED * direction;
-@@ -283,6 +275,14 @@ Behavior* PerimeterFollowBehavior::execu
+@@ -283,6 +276,14 @@ Behavior* PerimeterFollowBehavior::execu
          tries = 240;
          state = FOLLOW_STATE_TURN_OUT;
        }
