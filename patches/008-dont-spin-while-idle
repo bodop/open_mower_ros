@@ -1,7 +1,7 @@
-Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
+Index: open_mower_ros-try-merge/src/lib/xbot_positioning/src/xbot_positioning.cpp
 ===================================================================
---- open_mower_ros.orig/src/lib/xbot_positioning/src/xbot_positioning.cpp
-+++ open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
+--- open_mower_ros-try-merge.orig/src/lib/xbot_positioning/src/xbot_positioning.cpp
++++ open_mower_ros-try-merge/src/lib/xbot_positioning/src/xbot_positioning.cpp
 @@ -41,12 +41,25 @@ xbot_msgs::WheelTick last_ticks;
  bool has_gps;
  xbot_msgs::AbsolutePose last_gps;
@@ -31,7 +31,7 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
  
  // Current speed calculated by wheel ticks
  double vx = 0.0;
-@@ -78,34 +91,32 @@ ros::NodeHandle *paramNh;
+@@ -77,34 +90,32 @@ ros::NodeHandle *paramNh;
  void onImu(const sensor_msgs::Imu::ConstPtr &msg) {
      if (!has_gyro) {
          if (!skip_gyro_calibration) {
@@ -87,7 +87,7 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
  
      odometry.header.stamp = ros::Time::now();
      odometry.header.seq++;
-@@ -174,40 +185,36 @@ void onImu(const sensor_msgs::Imu::Const
+@@ -173,40 +184,36 @@ void onImu(const sensor_msgs::Imu::Const
      last_imu = *msg;
  }
  
@@ -156,7 +156,7 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
  }
  
  bool setPose(xbot_positioning::SetPoseSrvRequest &req, xbot_positioning::SetPoseSrvResponse &res) {
-@@ -367,7 +374,6 @@ int main(int argc, char **argv) {
+@@ -366,7 +373,6 @@ int main(int argc, char **argv) {
  
      ros::Subscriber imu_sub = paramNh->subscribe("imu_in", 10, onImu);
      ros::Subscriber twist_sub = paramNh->subscribe("twist_in", 10, onTwistIn);

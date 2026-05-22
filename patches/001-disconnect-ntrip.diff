@@ -1,7 +1,7 @@
-Index: open_mower_ros/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
+Index: open_mower_ros-try-merge/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
 ===================================================================
---- open_mower_ros.orig/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
-+++ open_mower_ros/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
+--- open_mower_ros-try-merge.orig/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
++++ open_mower_ros-try-merge/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
 @@ -1,3 +1,13 @@
 +/* Message flow:
 + * 
@@ -79,18 +79,17 @@ Index: open_mower_ros/src/lib/xbot_driver_gps/src/driver_gps_node.cpp
      pose_pub = paramNh.advertise<geometry_msgs::PoseWithCovariance>("pose", 10);
      xbot_pose_pub = paramNh.advertise<xbot_msgs::AbsolutePose>("xb_pose", 10);
      imu_pub = paramNh.advertise<sensor_msgs::Imu>("imu", 10);
-Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
+Index: open_mower_ros-try-merge/src/lib/xbot_positioning/src/xbot_positioning.cpp
 ===================================================================
---- open_mower_ros.orig/src/lib/xbot_positioning/src/xbot_positioning.cpp
-+++ open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
-@@ -67,13 +67,13 @@ nav_msgs::Odometry odometry;
+--- open_mower_ros-try-merge.orig/src/lib/xbot_positioning/src/xbot_positioning.cpp
++++ open_mower_ros-try-merge/src/lib/xbot_positioning/src/xbot_positioning.cpp
+@@ -67,12 +67,12 @@ nav_msgs::Odometry odometry;
  xbot_positioning::KalmanState state_msg;
  xbot_msgs::AbsolutePose xb_absolute_pose_msg;
  
 -bool gps_enabled = true;
  int gps_outlier_count = 0;
  int valid_gps_samples = 0;
- int gps_message_throttle = 1;
  
  ros::Time last_gps_time(0.0);
  
@@ -98,7 +97,7 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
  
  void onImu(const sensor_msgs::Imu::ConstPtr &msg) {
      if (!has_gyro) {
-@@ -160,7 +160,7 @@ void onImu(const sensor_msgs::Imu::Const
+@@ -159,7 +159,7 @@ void onImu(const sensor_msgs::Imu::Const
          xb_absolute_pose_msg.flags |= xbot_msgs::AbsolutePose::FLAG_SENSOR_FUSION_RECENT_ABSOLUTE_POSE;
      } else {
          // on GPS timeout, we set accuracy to 0.
@@ -107,7 +106,7 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
      }
      // TODO: set real value
      xb_absolute_pose_msg.orientation_accuracy = 0.01;
-@@ -205,11 +205,6 @@ void onTwistIn(const geometry_msgs::Twis
+@@ -204,11 +204,6 @@ void onTwistIn(const geometry_msgs::Twis
      vx = msg->twist.linear.x;
  }
  
@@ -119,19 +118,17 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
  bool setPose(xbot_positioning::SetPoseSrvRequest &req, xbot_positioning::SetPoseSrvResponse &res) {
      tf2::Quaternion q;
      tf2::fromMsg(req.robot_pose.orientation, q);
-@@ -224,11 +219,6 @@ bool setPose(xbot_positioning::SetPoseSr
+@@ -223,9 +218,6 @@ bool setPose(xbot_positioning::SetPoseSr
  }
  
  void onPose(const xbot_msgs::AbsolutePose::ConstPtr &msg) {
--    if (!gps_enabled) {
--        ROS_INFO_STREAM_THROTTLE(gps_message_throttle, "dropping GPS update, since gps_enabled = false.");
--        return;
--    }
--    // TODO fuse with high covariance?
+-  if (!gps_enabled) {
+-    return;
+-  }
+     // TODO fuse with high covariance?
      if ((msg->flags & (xbot_msgs::AbsolutePose::FLAG_GPS_RTK_FIXED)) == 0) {
          ROS_INFO_STREAM_THROTTLE(1, "Dropped GPS update, since it's not RTK Fixed");
-         return;
-@@ -308,11 +298,27 @@ void onPose(const xbot_msgs::AbsolutePos
+@@ -306,11 +298,27 @@ void onPose(const xbot_msgs::AbsolutePos
      }
  }
  
@@ -160,7 +157,7 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
      vx = 0.0;
      has_gyro = false;
      has_ticks = false;
-@@ -325,19 +331,19 @@ int main(int argc, char **argv) {
+@@ -323,18 +331,18 @@ int main(int argc, char **argv) {
      antenna_offset_x = antenna_offset_y = 0;
  
      ros::NodeHandle n;
@@ -177,7 +174,6 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
 -    paramNh.param("debug", publish_debug, false);
 -    paramNh.param("antenna_offset_x", antenna_offset_x, 0.0);
 -    paramNh.param("antenna_offset_y", antenna_offset_y, 0.0);
--    paramNh.param("gps_message_throttle", gps_message_throttle, 1);
 +    paramNh->param("skip_gyro_calibration", skip_gyro_calibration, false);
 +    paramNh->param("gyro_offset", gyro_offset, 0.0);
 +    paramNh->param("min_speed", min_speed, 0.01);
@@ -185,11 +181,10 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
 +    paramNh->param("debug", publish_debug, false);
 +    paramNh->param("antenna_offset_x", antenna_offset_x, 0.0);
 +    paramNh->param("antenna_offset_y", antenna_offset_y, 0.0);
-+    paramNh->param("gps_message_throttle", gps_message_throttle, 1);
  
      core.setAntennaOffset(antenna_offset_x, antenna_offset_y);
  
-@@ -347,18 +353,19 @@ int main(int argc, char **argv) {
+@@ -344,18 +352,19 @@ int main(int argc, char **argv) {
          ROS_WARN_STREAM("Using gyro offset of: " << gyro_offset);
      }
  
@@ -217,10 +212,10 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
      ros::spin();
      return 0;
  }
-Index: open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
+Index: open_mower_ros-try-merge/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
 ===================================================================
---- open_mower_ros.orig/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
-+++ open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
+--- open_mower_ros-try-merge.orig/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
++++ open_mower_ros-try-merge/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
 @@ -84,9 +84,6 @@ class NTRIPRosBase:
      # Setup a shutdown hook
      rospy.on_shutdown(self.stop)
@@ -257,10 +252,10 @@ Index: open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_ros_base.py
      for raw_rtcm in self._client.recv_rtcm():
        self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
  
-Index: open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_client.py
+Index: open_mower_ros-try-merge/src/lib/ntrip_client/src/ntrip_client/ntrip_client.py
 ===================================================================
---- open_mower_ros.orig/src/lib/ntrip_client/src/ntrip_client/ntrip_client.py
-+++ open_mower_ros/src/lib/ntrip_client/src/ntrip_client/ntrip_client.py
+--- open_mower_ros-try-merge.orig/src/lib/ntrip_client/src/ntrip_client/ntrip_client.py
++++ open_mower_ros-try-merge/src/lib/ntrip_client/src/ntrip_client/ntrip_client.py
 @@ -64,6 +64,7 @@ class NTRIPClient(NTRIPBase):
      self.rtcm_timeout_seconds = self.DEFAULT_RTCM_TIMEOUT_SECONDS
  
