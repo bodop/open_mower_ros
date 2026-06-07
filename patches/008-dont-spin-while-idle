@@ -1,7 +1,7 @@
-Index: open_mower_ros-try-merge/src/lib/xbot_positioning/src/xbot_positioning.cpp
+Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
 ===================================================================
---- open_mower_ros-try-merge.orig/src/lib/xbot_positioning/src/xbot_positioning.cpp
-+++ open_mower_ros-try-merge/src/lib/xbot_positioning/src/xbot_positioning.cpp
+--- open_mower_ros.orig/src/lib/xbot_positioning/src/xbot_positioning.cpp
++++ open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
 @@ -41,12 +41,25 @@ xbot_msgs::WheelTick last_ticks;
  bool has_gps;
  xbot_msgs::AbsolutePose last_gps;
