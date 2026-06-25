@@ -2,7 +2,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.c
 ===================================================================
 --- open_mower_ros.orig/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
 +++ open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.cpp
-@@ -27,6 +27,7 @@
+@@ -28,6 +28,7 @@
  #include "mower_map/ClearNavPointSrv.h"
  #include "mower_map/GetMowingAreaSrv.h"
  #include "mower_map/SetNavPointSrv.h"
@@ -10,8 +10,8 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.c
  
  extern ros::ServiceClient mapClient;
  extern ros::ServiceClient pathClient;
-@@ -38,7 +39,7 @@ extern actionlib::SimpleActionClient<mbf
- extern actionlib::SimpleActionClient<mbf_msgs::ExePathAction>* mbfClientExePath;
+@@ -40,7 +41,7 @@ extern actionlib::SimpleActionClient<mbf
+ extern actionlib::SimpleActionClient<mbf_msgs::RecoveryAction>* mbfClientRecovery;
  extern mower_logic::MowerLogicConfig getConfig();
  extern void setConfig(mower_logic::MowerLogicConfig);
 -
@@ -19,7 +19,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.c
  extern void registerActions(std::string prefix, const std::vector<xbot_msgs::ActionInfo>& actions);
  
  MowingBehavior MowingBehavior::INSTANCE;
-@@ -474,8 +475,12 @@ bool MowingBehavior::execute_mowing_plan
+@@ -500,8 +501,12 @@ bool MowingBehavior::execute_mowing_plan
  
        ROS_INFO_STREAM("MowingBehavior: (MOW) First point reached - Executing mow path with "
                        << path.path.poses.size() << " poses, from index " << exePathStartIndex);
@@ -33,7 +33,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.c
        actionlib::SimpleClientGoalState current_status(actionlib::SimpleClientGoalState::PENDING);
        ros::Rate r(10);
  
-@@ -564,9 +569,9 @@ bool MowingBehavior::execute_mowing_plan
+@@ -621,9 +626,9 @@ bool MowingBehavior::execute_mowing_plan
          }
        }
      }

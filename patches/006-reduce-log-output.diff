@@ -2,7 +2,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
 ===================================================================
 --- open_mower_ros.orig/src/mower_logic/src/mower_logic/mower_logic.cpp
 +++ open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
-@@ -384,6 +384,8 @@ bool isGpsGood() {
+@@ -386,6 +386,8 @@ bool isGpsGood() {
  /// /odom and /mower/status outages
  /// @param timer_event
  void checkSafety(const ros::TimerEvent& timer_event) {
@@ -11,7 +11,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
    const auto last_status = status_state_subscriber.getMessage();
    const auto last_emergency = emergency_state_subscriber.getMessage();
    const auto last_config = getConfig();
-@@ -456,8 +458,12 @@ void checkSafety(const ros::TimerEvent&
+@@ -458,8 +460,12 @@ void checkSafety(const ros::TimerEvent&
      setLastGoodGPS(ros::Time::now());
      high_level_status.gps_quality_percent =
          1.0 - fmin(1.0, last_pose.position_accuracy / last_config.max_position_accuracy);
@@ -25,7 +25,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
      }
    } else {
      // GPS = bad, set quality to 0
-@@ -467,7 +473,10 @@ void checkSafety(const ros::TimerEvent&
+@@ -469,7 +475,10 @@ void checkSafety(const ros::TimerEvent&
        high_level_status.gps_quality_percent = -1;
      }
      if (currentBehavior->needs_gps()) {
@@ -37,7 +37,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
      }
    }
  
-@@ -477,8 +486,13 @@ void checkSafety(const ros::TimerEvent&
+@@ -479,8 +488,13 @@ void checkSafety(const ros::TimerEvent&
      // GPS = bad, set quality to 0
      high_level_status.gps_quality_percent = 0;
      if (currentBehavior->needs_gps()) {
