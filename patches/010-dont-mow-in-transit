@@ -18,8 +18,8 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.c
 +extern mower_msgs::Status getStatus();
  extern void registerActions(std::string prefix, const std::vector<xbot_msgs::ActionInfo>& actions);
  
- MowingBehavior MowingBehavior::INSTANCE;
-@@ -500,8 +501,12 @@ bool MowingBehavior::execute_mowing_plan
+ extern std::string current_job_id;
+@@ -509,8 +510,12 @@ bool MowingBehavior::execute_mowing_plan
  
        ROS_INFO_STREAM("MowingBehavior: (MOW) First point reached - Executing mow path with "
                        << path.path.poses.size() << " poses, from index " << exePathStartIndex);
@@ -33,7 +33,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/MowingBehavior.c
        actionlib::SimpleClientGoalState current_status(actionlib::SimpleClientGoalState::PENDING);
        ros::Rate r(10);
  
-@@ -621,9 +626,9 @@ bool MowingBehavior::execute_mowing_plan
+@@ -632,9 +637,9 @@ bool MowingBehavior::execute_mowing_plan
          }
        }
      }

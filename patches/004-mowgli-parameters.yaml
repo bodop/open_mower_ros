@@ -9,7 +9,7 @@ Index: open_mower_ros/src/open_mower/params/docking_ftc_local_planner.yaml
    check_obstacles: false
    oscillation_recovery: false
    debug_pid: false
-@@ -17,14 +17,14 @@ DockingFTCPlanner:
+@@ -17,15 +17,15 @@ DockingFTCPlanner:
    kp_ang: 1.0
    kp_lat: 6.15
    kp_lon: 4.0
@@ -29,11 +29,12 @@ Index: open_mower_ros/src/open_mower/params/docking_ftc_local_planner.yaml
 +  speed_fast_threshold: 0.3
    speed_fast_threshold_angle: 5.0
    speed_slow: 0.1
+   lateral_priority_distance: 0.1
 Index: open_mower_ros/src/open_mower/params/ftc_local_planner.yaml
 ===================================================================
 --- open_mower_ros.orig/src/open_mower/params/ftc_local_planner.yaml
 +++ open_mower_ros/src/open_mower/params/ftc_local_planner.yaml
-@@ -4,27 +4,27 @@ FTCPlanner:
+@@ -4,29 +4,29 @@ FTCPlanner:
    oscillation_recovery: false
    debug_pid: true
    forward_only: true
@@ -75,3 +76,5 @@ Index: open_mower_ros/src/open_mower/params/ftc_local_planner.yaml
 +  speed_fast_threshold: 0.3
 +  speed_fast_threshold_angle: 5.0
    speed_slow: 0.15
+   lateral_priority_distance: 0.1
+   lateral_priority_min_gain: 0.1
