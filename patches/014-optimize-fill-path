@@ -21,7 +21,7 @@ Index: open_mower_ros/src/lib/slic3r_coverage_planner/src/coverage_planner.cpp
  slic3r_coverage_planner::Path determinePathForOutline(std_msgs::Header &header, Slic3r::Polygon &outline_poly, Slic3r::Polygons &group, bool isObstacle, Point *areaLastPoint) {
      slic3r_coverage_planner::Path path;
      path.is_outline = true;
-@@ -518,6 +530,8 @@ bool planPath(slic3r_coverage_planner::P
+@@ -526,6 +538,8 @@ bool planPath(slic3r_coverage_planner::P
      header.frame_id = "map";
      header.seq = 0;
  
@@ -30,7 +30,7 @@ Index: open_mower_ros/src/lib/slic3r_coverage_planner/src/coverage_planner.cpp
      /**
       * Some postprocessing is done here. Until now we just have polygons (just points), but the ROS
       * navigation stack requires an orientation for each of those points as well.
-@@ -531,6 +545,7 @@ bool planPath(slic3r_coverage_planner::P
+@@ -539,6 +553,7 @@ bool planPath(slic3r_coverage_planner::P
          auto path = determinePathForOutline(header, outline_poly, group, false, &areaLastPoint);
          if (!path.path.poses.empty()) {
              res.paths.push_back(path);
@@ -38,7 +38,7 @@ Index: open_mower_ros/src/lib/slic3r_coverage_planner/src/coverage_planner.cpp
          }
      }
  
-@@ -576,11 +591,46 @@ bool planPath(slic3r_coverage_planner::P
+@@ -584,11 +599,46 @@ bool planPath(slic3r_coverage_planner::P
          if (!path.path.poses.empty()) {
              std::reverse(path.path.poses.begin(), path.path.poses.end());
              res.paths.push_back(path);
@@ -85,7 +85,7 @@ Index: open_mower_ros/src/lib/slic3r_coverage_planner/src/coverage_planner.cpp
              auto &line = fill_lines[i];
              slic3r_coverage_planner::Path path;
              path.is_outline = false;
-@@ -629,6 +679,7 @@ bool planPath(slic3r_coverage_planner::P
+@@ -637,6 +687,7 @@ bool planPath(slic3r_coverage_planner::P
              path.path.poses.push_back(pose);
  
              res.paths.push_back(path);

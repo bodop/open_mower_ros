@@ -2,7 +2,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/IdleBehavior.cpp
 ===================================================================
 --- open_mower_ros.orig/src/mower_logic/src/mower_logic/behaviors/IdleBehavior.cpp
 +++ open_mower_ros/src/mower_logic/src/mower_logic/behaviors/IdleBehavior.cpp
-@@ -86,6 +86,15 @@ Behavior* IdleBehavior::execute() {
+@@ -87,6 +87,15 @@ Behavior* IdleBehavior::execute() {
      const bool rain_delay = last_config.rain_mode == 2 && ros::Time::now() < rain_resume;
      if (rain_delay) {
        ROS_INFO_STREAM_THROTTLE(300, "Rain delay: " << int((rain_resume - ros::Time::now()).toSec() / 60) << " minutes");
