@@ -12,3 +12,4 @@
 012-mowgli-status
 013-dont-starting-during-rain
 014-optimize-fill-path
+015-dont-set-robot-pose-with-perimeter-docking

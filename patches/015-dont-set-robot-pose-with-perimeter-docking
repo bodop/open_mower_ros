@@ -1,0 +1,17 @@
+Index: open_mower_ros/src/mower_logic/src/mower_logic/behaviors/IdleBehavior.cpp
+===================================================================
+--- open_mower_ros.orig/src/mower_logic/src/mower_logic/behaviors/IdleBehavior.cpp
++++ open_mower_ros/src/mower_logic/src/mower_logic/behaviors/IdleBehavior.cpp
+@@ -123,8 +123,10 @@ Behavior* IdleBehavior::execute() {
+     const bool currently_docked = last_charge_v > 5.0;
+     if (currently_docked) {
+       if (!pose_synced_to_dock) {
+-        ROS_INFO_STREAM("Currently inside the docking station, we set the robot's pose to the docks pose.");
+-        setRobotPose(docking_pose_stamped.pose);
++        if (!PerimeterUndockingBehavior::configured(config)) {
++          ROS_INFO_STREAM("Currently inside the docking station, we set the robot's pose to the docks pose.");
++          setRobotPose(docking_pose_stamped.pose);
++        }
+         pose_synced_to_dock = true;
+       }
+     } else {
