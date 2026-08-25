@@ -2,7 +2,7 @@ Index: open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
 ===================================================================
 --- open_mower_ros.orig/src/mower_logic/src/mower_logic/mower_logic.cpp
 +++ open_mower_ros/src/mower_logic/src/mower_logic/mower_logic.cpp
-@@ -638,9 +638,7 @@ void checkSafety(const ros::TimerEvent&
+@@ -640,9 +640,7 @@ void checkSafety(const ros::TimerEvent&
      rain_detected = true;
    }
  
