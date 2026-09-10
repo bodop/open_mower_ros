@@ -212,3 +212,82 @@ Index: open_mower_ros/src/lib/xbot_positioning/src/xbot_positioning.cpp
      ros::spin();
      return 0;
  }
+Index: open_mower_ros/src/lib/ros_ntrip_client/src/ntrip_client_node.cpp
+===================================================================
+--- open_mower_ros.orig/src/lib/ros_ntrip_client/src/ntrip_client_node.cpp
++++ open_mower_ros/src/lib/ros_ntrip_client/src/ntrip_client_node.cpp
+@@ -56,9 +56,32 @@ int main(int argc, char** argv)
+     counters_pub.publish(counters_msg);
+   };
+ 
++  bool started=false;
++
++  auto data_callback=[&](const std::vector<std::uint8_t>& chunk)
++  {
++    const rtcm_msgs::Message message = ros_ntrip_client::node_utils::makeRtcmMessage(
++        chunk, node_config.rtcm_frame_id, ros::Time::now());
++    rtcm_pub.publish(message);
++  };
++    
+   ros::Subscriber gga_sub = nh.subscribe<nmea_msgs::Sentence>(
+       node_config.gga_topic, 10, [&](const nmea_msgs::Sentence::ConstPtr& msg)
+       {
++	bool client_up_required=rtcm_pub.getNumSubscribers()>0;
++	if (client_up_required!=started) {
++	  if (client_up_required) {
++	    started = client.start(data_callback,publish_status);
++	    if (!started)
++	      {
++		ROS_WARN("Failed to start NTRIP client.");
++	      }
++	  } else {
++	    client.stop();
++	    started=false;
++	  }
++	}
++	if (!started) return;
+         {
+           std::lock_guard<std::mutex> lock(*latest_gga_mutex);
+           *latest_gga = msg->sentence;
+@@ -89,6 +112,19 @@ int main(int argc, char** argv)
+         nh.createTimer(ros::Duration(node_config.gga_send_interval_sec),
+                        [&, latest_gga, latest_gga_mutex](const ros::TimerEvent&)
+                        {
++			 bool client_up_required=rtcm_pub.getNumSubscribers()>0;
++			 if (client_up_required!=started) {
++			   if (client_up_required) {
++			     started = client.start(data_callback,publish_status);
++			     if (!started)
++			     {
++			       ROS_WARN("Failed to start NTRIP client.");
++			     }
++			   } else {
++			     client.stop();
++			     started=false;
++			   }
++			 }
+                          std::string gga_to_send;
+                          if (node_config.use_fixed_gga_position)
+                          {
+@@ -112,21 +148,6 @@ int main(int argc, char** argv)
+                        })));
+   }
+ 
+-  const bool started = client.start(
+-      [&](const std::vector<std::uint8_t>& chunk)
+-      {
+-        const rtcm_msgs::Message message = ros_ntrip_client::node_utils::makeRtcmMessage(
+-            chunk, node_config.rtcm_frame_id, ros::Time::now());
+-        rtcm_pub.publish(message);
+-      },
+-      publish_status);
+-
+-  if (!started)
+-  {
+-    ROS_FATAL("Failed to start NTRIP client.");
+-    return 1;
+-  }
+-
+   publish_counters();
+ 
+   ros::AsyncSpinner spinner(2);
