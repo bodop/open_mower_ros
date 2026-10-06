@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "EventHistory.h"
+#include "LogBuffer.h"
 #include "PositionHistory.h"
 #include "capabilities.h"
 #include "geometry_msgs/Twist.h"
@@ -111,6 +112,11 @@ public:
     }
     void message_arrived(mqtt::const_message_ptr ptr) override {
         if(ptr->get_topic() == this->mqtt_topic_prefix + "teleop") {
+            // only vx and vz, some 30 bytes. a large nested document overflowed the stack while decoding
+            if (ptr->get_payload().size() > 1024) {
+                ROS_ERROR_STREAM("Ignoring teleop bson of " << ptr->get_payload().size() << " bytes");
+                return;
+            }
             try {
                 json json = json::from_bson(ptr->get_payload().begin(), ptr->get_payload().end());
                 geometry_msgs::Twist t;
@@ -154,6 +160,7 @@ bool has_map_overlay = false;
 
 EventHistory event_history;
 PositionHistory position_history;
+LogBuffer log_buffer(1000);
 
 // clang-format off
 xbot_mqtt::RpcProvider rpc_provider("xbot_monitoring", {{
@@ -187,6 +194,17 @@ xbot_mqtt::RpcProvider rpc_provider("xbot_monitoring", {{
         } else {
             return event_history.deleteHistory(std::nullopt);
         }
+    }),
+    RPC_METHOD("logs.recent", {
+        double since = 0;
+        uint8_t level = rosgraph_msgs::Log::WARN;
+        size_t limit = 200;
+        if (params.is_object()) {
+            if (params.contains("since") && params["since"].is_number()) since = params["since"].get<double>();
+            if (params.contains("level") && params["level"].is_string()) level = LogBuffer::levelFromName(params["level"].get<std::string>());
+            if (params.contains("limit") && params["limit"].is_number_unsigned()) limit = params["limit"].get<size_t>();
+        }
+        return log_buffer.get(since, level, limit);
     }),
     RPC_METHOD("position.history", {
         if (params.is_object() && params.contains("job_id")) {
@@ -752,12 +770,40 @@ void rpc_publish_error(const int16_t code, const std::string &message, const nlo
     try_publish("rpc/response", err_resp.dump(2));
 }
 
+// deepest nesting of [ and { in a json text, strings skipped. only exact for valid json, anything else doesn't get
+// past the parser anyway
+size_t json_nesting(const std::string &text) {
+    size_t depth = 0, deepest = 0;
+    bool in_string = false;
+    for (size_t i = 0; i < text.size(); i++) {
+        const char c = text[i];
+        if (in_string) {
+            if (c == '\\') i++;
+            else if (c == '"') in_string = false;
+        } else if (c == '"') {
+            in_string = true;
+        } else if (c == '[' || c == '{') {
+            deepest = std::max(deepest, ++depth);
+        } else if ((c == ']' || c == '}') && depth > 0) {
+            depth--;
+        }
+    }
+    return deepest;
+}
+
 void rpc_request_callback(const std::string &payload) {
+    // a request nested some 100k levels deep overflowed the stack when it was copied or written again, no rpc needs
+    // more than a few
+    if (json_nesting(payload) > 100) {
+        return rpc_publish_error(xbot_mqtt::RpcError::ERROR_INVALID_REQUEST, "Request is nested too deep");
+    }
+
     // Parse
     json req;
     try {
       req = json::parse(payload);
-    } catch (const json::parse_error &e) {
+    } catch (const json::exception &e) {
+      // not only parse_error, e.g. a number too large for a double (1e400) is an out_of_range and would end the node
       return rpc_publish_error(xbot_mqtt::RpcError::ERROR_INVALID_JSON, "Could not parse request JSON");
     }
 
@@ -806,7 +852,7 @@ void rpc_response_callback(const xbot_mqtt::RpcResponse::ConstPtr &msg) {
     json result;
     try {
         result = json::parse(msg->result);
-    } catch (const json::parse_error &e) {
+    } catch (const json::exception &e) {
         return rpc_publish_error(xbot_mqtt::RpcError::ERROR_INTERNAL, "Internal error while parsing result JSON: " + std::string(e.what()), msg->id);
     }
 
@@ -823,6 +869,10 @@ bool register_methods(xbot_mqtt::RegisterMethodsSrvRequest &req, xbot_mqtt::Regi
     registered_methods[req.node_id] = req.methods;
     ROS_INFO_STREAM("new methods registered: " << req.node_id << " registered " << req.methods.size() << " methods.");
     return true;
+}
+
+void rosout_callback(const rosgraph_msgs::Log::ConstPtr &msg) {
+    log_buffer.add(*msg);
 }
 
 int main(int argc, char **argv) {
@@ -871,6 +921,7 @@ int main(int argc, char **argv) {
     ros::Timer positionHistoryFlushTimer =
         n->createTimer(ros::Duration(POSITION_HISTORY_FLUSH_INTERVAL), position_history_flush_timer_callback);
     ros::Subscriber mqttPublishSubscriber = n->subscribe("/xbot_monitoring/mqtt_publish", 50, mqtt_publish_callback);
+    ros::Subscriber rosoutSubscriber = n->subscribe("/rosout_agg", 100, rosout_callback);
 
     cmd_vel_pub = n->advertise<geometry_msgs::Twist>("xbot_monitoring/remote_cmd_vel", 1);
     action_pub = n->advertise<std_msgs::String>("xbot/action", 1);
