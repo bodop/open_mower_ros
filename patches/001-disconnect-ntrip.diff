@@ -216,12 +216,19 @@ Index: open_mower_ros/src/lib/ros_ntrip_client/src/ntrip_client_node.cpp
 ===================================================================
 --- open_mower_ros.orig/src/lib/ros_ntrip_client/src/ntrip_client_node.cpp
 +++ open_mower_ros/src/lib/ros_ntrip_client/src/ntrip_client_node.cpp
-@@ -56,9 +56,32 @@ int main(int argc, char** argv)
+@@ -46,6 +46,8 @@ int main(int argc, char** argv)
+     status_code_pub.publish(status_code_msg);
+ 
+     ROS_INFO_STREAM_THROTTLE(5.0, "NTRIP: " << event.message);
++
++    return rtcm_pub.getNumSubscribers()>0;
+   };
+ 
+   auto publish_counters = [&]()
+@@ -56,9 +58,28 @@ int main(int argc, char** argv)
      counters_pub.publish(counters_msg);
    };
  
-+  bool started=false;
-+
 +  auto data_callback=[&](const std::vector<std::uint8_t>& chunk)
 +  {
 +    const rtcm_msgs::Message message = ros_ntrip_client::node_utils::makeRtcmMessage(
@@ -233,43 +240,40 @@ Index: open_mower_ros/src/lib/ros_ntrip_client/src/ntrip_client_node.cpp
        node_config.gga_topic, 10, [&](const nmea_msgs::Sentence::ConstPtr& msg)
        {
 +	bool client_up_required=rtcm_pub.getNumSubscribers()>0;
-+	if (client_up_required!=started) {
++	if (client_up_required!=client.isRunning()) {
 +	  if (client_up_required) {
-+	    started = client.start(data_callback,publish_status);
-+	    if (!started)
++	    if (!(client_up_required=client.start(data_callback,publish_status)))
 +	      {
 +		ROS_WARN("Failed to start NTRIP client.");
 +	      }
 +	  } else {
 +	    client.stop();
-+	    started=false;
 +	  }
 +	}
-+	if (!started) return;
++	if (!client_up_required) return;
          {
            std::lock_guard<std::mutex> lock(*latest_gga_mutex);
            *latest_gga = msg->sentence;
-@@ -89,6 +112,19 @@ int main(int argc, char** argv)
+@@ -89,6 +110,18 @@ int main(int argc, char** argv)
          nh.createTimer(ros::Duration(node_config.gga_send_interval_sec),
                         [&, latest_gga, latest_gga_mutex](const ros::TimerEvent&)
                         {
 +			 bool client_up_required=rtcm_pub.getNumSubscribers()>0;
-+			 if (client_up_required!=started) {
++			 if (client_up_required!=client.isRunning()) {
 +			   if (client_up_required) {
-+			     started = client.start(data_callback,publish_status);
-+			     if (!started)
++			     client_up_required = client.start(data_callback,publish_status);
++			     if (!client_up_required)
 +			     {
 +			       ROS_WARN("Failed to start NTRIP client.");
 +			     }
 +			   } else {
 +			     client.stop();
-+			     started=false;
 +			   }
 +			 }
                           std::string gga_to_send;
                           if (node_config.use_fixed_gga_position)
                           {
-@@ -112,21 +148,6 @@ int main(int argc, char** argv)
+@@ -112,21 +145,6 @@ int main(int argc, char** argv)
                         })));
    }
  
@@ -291,3 +295,80 @@ Index: open_mower_ros/src/lib/ros_ntrip_client/src/ntrip_client_node.cpp
    publish_counters();
  
    ros::AsyncSpinner spinner(2);
+Index: open_mower_ros/src/lib/ros_ntrip_client/include/ros_ntrip_client/ntrip_client.h
+===================================================================
+--- open_mower_ros.orig/src/lib/ros_ntrip_client/include/ros_ntrip_client/ntrip_client.h
++++ open_mower_ros/src/lib/ros_ntrip_client/include/ros_ntrip_client/ntrip_client.h
+@@ -116,11 +116,12 @@ class NtripClient
+ {
+ public:
+   using DataCallback = std::function<void(const std::vector<std::uint8_t>&)>;
+-  using StatusCallback = std::function<void(const StatusEvent&)>;
+-
++  using StatusCallback = std::function<bool(const StatusEvent&)>;
++  
+   explicit NtripClient(NtripClientConfig config);
+   ~NtripClient();
+ 
++  bool isRunning();
+   bool start(DataCallback data_callback, StatusCallback status_callback = StatusCallback());
+   void stop();
+   void updateGgaSentence(const std::string& gga_sentence);
+@@ -142,6 +143,7 @@ private:
+     DataCallback data_callback;
+     StatusCallback status_callback;
+     bool stopping = false;
++    NtripClient *client;
+     std::thread thread;
+   };
+ 
+Index: open_mower_ros/src/lib/ros_ntrip_client/src/ntrip_client.cpp
+===================================================================
+--- open_mower_ros.orig/src/lib/ros_ntrip_client/src/ntrip_client.cpp
++++ open_mower_ros/src/lib/ros_ntrip_client/src/ntrip_client.cpp
+@@ -36,6 +36,11 @@ NtripClient::~NtripClient()
+   closeWakePipe();
+ }
+ 
++bool NtripClient::isRunning()
++{
++  return running_;
++}
++  
+ bool NtripClient::start(DataCallback data_callback, StatusCallback status_callback)
+ {
+   std::lock_guard<std::mutex> lifecycle_lock(lifecycle_mutex_);
+@@ -81,6 +86,7 @@ bool NtripClient::start(DataCallback dat
+     try
+     {
+       worker_thread_ = std::thread(&NtripClient::workerLoop, this);
++      setStatus(StatusCode::Info, "Started");
+     }
+     catch (...)
+     {
+@@ -101,6 +107,8 @@ void NtripClient::stop()
+ {
+   std::lock_guard<std::mutex> lifecycle_lock(lifecycle_mutex_);
+ 
++  setStatus(StatusCode::Info, "Shutdown");
++
+   const bool was_running = running_.exchange(false);
+   const bool called_from_worker =
+       worker_thread_.joinable() && std::this_thread::get_id() == worker_thread_.get_id();
+@@ -376,6 +384,7 @@ void NtripClient::startCallbackDispatche
+   dispatcher->data_callback = std::move(data_callback);
+   dispatcher->status_callback = std::move(status_callback);
+   dispatcher->thread = std::thread(&NtripClient::callbackLoop, dispatcher);
++  dispatcher->client=this;
+   std::atomic_store(&callback_dispatcher_, std::move(dispatcher));
+ }
+ 
+@@ -436,7 +445,7 @@ void NtripClient::callbackLoop(std::shar
+       {
+         try
+         {
+-          dispatcher->status_callback(item.status);
++          if (!dispatcher->status_callback(item.status)) dispatcher->client->stop();
+         }
+         catch (...)
+         {
